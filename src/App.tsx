@@ -18,7 +18,32 @@ function App() {
   const [isMissionControlOpen, setIsMissionControlOpen] = useState(false)
   const [layout, setLayout] = useState('single')
   const [activeWebViews, setActiveWebViews] = useState<WebViewInfo[]>([])
-  const [activeIds, setActiveIds] = useState<string[]>([]) // IDs assigned to panes
+  const [activeIds, setActiveIds] = useState<string[]>([]) // List of instanceIds assigned to panes
+
+  // Theme state with system default
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const saved = localStorage.getItem('theme') as 'light' | 'dark' | null
+    if (saved) return saved
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  })
+
+  // Apply theme to document
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem('theme', theme)
+  }, [theme])
+
+  // Listen for system theme changes
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    const handleChange = (e: MediaQueryListEvent) => {
+      if (!localStorage.getItem('theme')) {
+        setTheme(e.matches ? 'dark' : 'light')
+      }
+    }
+    mediaQuery.addEventListener('change', handleChange)
+    return () => mediaQuery.removeEventListener('change', handleChange)
+  }, [])
 
   useEffect(() => {
     const removeListener = window.electronAPI.onToggleLauncher(() => {
@@ -28,49 +53,61 @@ function App() {
     return () => removeListener()
   }, [])
 
-  const handleSelectApp = (app: AppIcon) => {
+  const handleSelectApp = (app: AppIcon, forceNewInstance = false) => {
     setIsLauncherOpen(false)
     setIsMissionControlOpen(false)
 
-    // Check if webview already exists in registry
-    setActiveWebViews((prev) => {
-      if (prev.find((wv) => wv.id === app.id)) return prev
-      return [...prev, { id: app.id, url: app.url, name: app.name }]
-    })
+    let instanceToFocus: WebViewInfo | undefined
+
+    if (!forceNewInstance) {
+      // Find existing instance for this app
+      instanceToFocus = activeWebViews.find((wv) => wv.appId === app.id)
+    }
+
+    if (!instanceToFocus) {
+      // Create new instance
+      const newInstance: WebViewInfo = {
+        instanceId: `inst-${app.id}-${Date.now()}`,
+        appId: app.id,
+        url: app.url,
+        name: app.name,
+        partition: 'persist:main' // Default partition
+      }
+      setActiveWebViews((prev) => [...prev, newInstance])
+      instanceToFocus = newInstance
+    }
+
+    const instanceId = instanceToFocus.instanceId
 
     // Assign to a slot
     setActiveIds((prev) => {
-      if (layout === 'single') return [app.id]
-
-      if (prev.includes(app.id)) return prev
-      if (prev.length < 2) return [...prev, app.id]
-
-      return [app.id, prev[0]]
+      if (layout === 'single') return [instanceId]
+      if (prev.includes(instanceId)) return prev
+      if (prev.length < 2) return [...prev, instanceId]
+      return [instanceId, prev[0]]
     })
   }
 
-  const handleSelectFromMissionControl = (id: string) => {
+  const handleSelectFromMissionControl = (instanceId: string) => {
     setIsMissionControlOpen(false)
     setActiveIds((prev) => {
-      if (layout === 'single') return [id]
-      if (prev.includes(id)) return prev
-      return [id, ...prev.slice(0, 1)]
+      if (layout === 'single') return [instanceId]
+      if (prev.includes(instanceId)) return prev
+      return [instanceId, ...prev.slice(0, 1)]
     })
   }
 
-  const handleCloseWebView = (id: string) => {
-    setActiveWebViews((prev) => prev.filter((wv) => wv.id !== id))
-    setActiveIds((prev) => prev.filter((activeId) => activeId !== id))
+  const handleCloseWebView = (instanceId: string) => {
+    setActiveWebViews((prev) => prev.filter((wv) => wv.instanceId !== instanceId))
+    setActiveIds((prev) => prev.filter((id) => id !== instanceId))
   }
 
   const handleBrowserAction = (type: string) => {
-    const activeId = activeIds[0]
-    if (!activeId) return
+    const activeInstanceId = activeIds[0]
+    if (!activeInstanceId) return
 
-    const wv = document.getElementById(`webview-${activeId}`) as any
-    if (!wv) return
-
-    if (wv.tagName !== 'WEBVIEW') return
+    const wv = document.getElementById(`webview-${activeInstanceId}`) as any
+    if (!wv || wv.tagName !== 'WEBVIEW') return
 
     if (type === 'back' && wv.canGoBack()) wv.goBack()
     if (type === 'forward' && wv.canGoForward()) wv.goForward()
@@ -84,8 +121,8 @@ function App() {
 
       const updatedWebViews = await Promise.all(activeWebViews.map(async (wv) => {
         // Only refresh visible ones or those without a snapshot
-        if (activeIds.includes(wv.id) || !wv.screenshot) {
-          const webviewEl = document.getElementById(`webview-${wv.id}`) as any
+        if (activeIds.includes(wv.instanceId) || !wv.screenshot) {
+          const webviewEl = document.getElementById(`webview-${wv.instanceId}`) as any
           if (webviewEl && webviewEl.tagName === 'WEBVIEW') {
             try {
               const image = await webviewEl.capturePage()
@@ -98,9 +135,12 @@ function App() {
         return wv
       }))
 
-      // Only update if there's an actual change to avoid infinite re-renders
-      setActiveWebViews(updatedWebViews)
-    }, 5000) // Refresh every 5s in background
+      // Only update if there's an actual change 
+      setActiveWebViews((prev) => {
+        const hasChanged = JSON.stringify(prev) !== JSON.stringify(updatedWebViews)
+        return hasChanged ? updatedWebViews : prev
+      })
+    }, 5000)
 
     return () => clearInterval(timer)
   }, [activeIds, activeWebViews, isMissionControlOpen])
@@ -121,8 +161,10 @@ function App() {
           setIsMissionControlOpen(false)
         }}
         onToggleMissionControl={handleToggleMissionControl}
-        onSetLayout={(l) => setLayout(l)}
+        onSetLayout={(l: string) => setLayout(l)}
         currentLayout={layout}
+        theme={theme}
+        onToggleTheme={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
       />
 
       <div className="main-content">

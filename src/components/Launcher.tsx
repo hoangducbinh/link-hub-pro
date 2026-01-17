@@ -12,7 +12,7 @@ export interface AppIcon {
 interface LauncherProps {
     isOpen: boolean
     onClose: () => void
-    onSelect: (app: AppIcon) => void
+    onSelect: (app: AppIcon, forceNewInstance?: boolean) => void
     apps: AppIcon[]
 }
 
@@ -108,7 +108,11 @@ const Launcher: React.FC<LauncherProps> = ({ isOpen, onClose, onSelect, apps }) 
                                 key={app.id}
                                 whileHover={{ scale: 1.1 }}
                                 whileTap={{ scale: 0.95 }}
-                                onClick={() => onSelect(app)}
+                                onClick={() => onSelect(app, false)}
+                                onContextMenu={(e) => {
+                                    e.preventDefault()
+                                    onSelect(app, true)
+                                }}
                                 style={{
                                     display: 'flex',
                                     flexDirection: 'column',
@@ -136,6 +140,9 @@ const Launcher: React.FC<LauncherProps> = ({ isOpen, onClose, onSelect, apps }) 
                                 </div>
                                 <span style={{ fontSize: '14px', fontWeight: 500, textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
                                     {app.name}
+                                </span>
+                                <span style={{ fontSize: '10px', opacity: 0.4, marginTop: '4px' }}>
+                                    Right-click for new
                                 </span>
                             </motion.div>
                         ))}

@@ -9,7 +9,10 @@ import {
     Columns,
     Rows,
     Maximize2,
-    Square
+    Square,
+    Sun,
+    Moon,
+    Layout
 } from 'lucide-react'
 
 interface TitleBarProps {
@@ -20,6 +23,8 @@ interface TitleBarProps {
     onToggleMissionControl: () => void
     onSetLayout: (layout: string) => void
     currentLayout: string
+    theme: 'light' | 'dark'
+    onToggleTheme: () => void
 }
 
 const TitleBar: React.FC<TitleBarProps> = ({
@@ -29,7 +34,9 @@ const TitleBar: React.FC<TitleBarProps> = ({
     onToggleLauncher,
     onToggleMissionControl,
     onSetLayout,
-    currentLayout
+    currentLayout,
+    theme,
+    onToggleTheme
 }) => {
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0
 
@@ -70,16 +77,24 @@ const TitleBar: React.FC<TitleBarProps> = ({
                 </button>
             </div>
 
-            <div className="title-bar-layouts no-drag">
+            <button
+                className="tool-btn"
+                onClick={onToggleTheme}
+                title={theme === 'dark' ? 'Switch to Light' : 'Switch to Dark'}
+            >
+                {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+
+            <div className="layout-group" style={{ display: 'flex', gap: '4px', borderLeft: '1px solid var(--border-color)', paddingLeft: '8px' }}>
                 <button
-                    className={currentLayout === 'single' ? 'active' : ''}
+                    className={`tool-btn ${currentLayout === 'single' ? 'active' : ''}`}
                     onClick={() => onSetLayout('single')}
                     title="Single View"
                 >
-                    <Square size={15} strokeWidth={1.5} />
+                    <Layout size={18} />
                 </button>
                 <button
-                    className={currentLayout === 'split-h' ? 'active' : ''}
+                    className={`tool-btn ${currentLayout === 'split-h' ? 'active' : ''}`}
                     onClick={() => onSetLayout('split-h')}
                     title="Split Horizontal"
                 >

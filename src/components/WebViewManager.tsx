@@ -1,24 +1,26 @@
 import React from 'react'
 
 export interface WebViewInfo {
-    id: string
-    url: string
-    name: string
-    screenshot?: string // Data URL
+    instanceId: string;
+    appId: string;
+    url: string;
+    name: string;
+    partition?: string;
+    screenshot?: string;
 }
 
 interface WebViewManagerProps {
     webViews: WebViewInfo[]
-    layout: string // 'single', 'split-h', 'split-v'
-    activeIds: string[] // List of IDs to show in order of panes
+    layout: string
+    activeIds: string[] // List of instanceIds
 }
 
 const WebViewManager: React.FC<WebViewManagerProps> = ({ webViews, layout, activeIds }) => {
     // We keep ALL webviews in the DOM to preserve state, 
     // but only some are assigned to "slots" in the layout.
 
-    const getStyleForWebView = (wvId: string) => {
-        const slotIndex = activeIds.indexOf(wvId)
+    const getStyleForWebView = (instanceId: string) => {
+        const slotIndex = activeIds.indexOf(instanceId)
 
         // If not in a slot, hide it visually but keep it "active" for capture
         if (slotIndex === -1) {
@@ -40,6 +42,7 @@ const WebViewManager: React.FC<WebViewManagerProps> = ({ webViews, layout, activ
             position: 'absolute',
             border: activeIds.length > 1 ? '1px solid #333' : 'none',
             backgroundColor: '#000',
+            zIndex: 1,
         }
 
         if (layout === 'single') {
@@ -59,10 +62,11 @@ const WebViewManager: React.FC<WebViewManagerProps> = ({ webViews, layout, activ
         <div className="webview-container" style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
             {webViews.map((wv) => (
                 <webview
-                    key={wv.id}
-                    id={`webview-${wv.id}`}
+                    key={wv.instanceId}
+                    id={`webview-${wv.instanceId}`}
                     src={wv.url}
-                    style={getStyleForWebView(wv.id)}
+                    style={getStyleForWebView(wv.instanceId)}
+                    partition={wv.partition || 'persist:main'}
                     allowpopups="true"
                 />
             ))}

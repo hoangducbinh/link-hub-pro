@@ -69,14 +69,14 @@ const MissionControl: React.FC<MissionControlProps> = ({
                         ) : (
                             webViews.map((wv) => (
                                 <motion.div
-                                    key={wv.id}
-                                    layoutId={wv.id}
+                                    key={wv.instanceId}
+                                    layoutId={wv.instanceId}
                                     initial={{ scale: 0.9, opacity: 0 }}
                                     animate={{ scale: 1, opacity: 1 }}
                                     whileHover={{ y: -5, scale: 1.02 }}
                                     onClick={(e) => {
                                         e.stopPropagation()
-                                        onSelect(wv.id)
+                                        onSelect(wv.instanceId)
                                     }}
                                     style={{
                                         backgroundColor: 'rgba(255, 255, 255, 0.08)',
@@ -121,7 +121,7 @@ const MissionControl: React.FC<MissionControlProps> = ({
                                                 overflow: 'hidden',
                                                 textOverflow: 'ellipsis'
                                             }}>
-                                                {wv.url}
+                                                {wv.instanceId}
                                             </div>
                                         </div>
                                     </div>
@@ -157,7 +157,7 @@ const MissionControl: React.FC<MissionControlProps> = ({
                                         className="close-wv-btn"
                                         onClick={(e) => {
                                             e.stopPropagation()
-                                            onCloseWebView(wv.id)
+                                            onCloseWebView(wv.instanceId)
                                         }}
                                         style={{
                                             position: 'absolute',
