@@ -31,6 +31,7 @@ function App() {
   })
   const [activeIds, setActiveIds] = useState<string[]>(() => [`inst-${DEFAULT_APPS[0].id}-default`])
   const [currentUrl, setCurrentUrl] = useState('')
+  const [activeTools, setActiveTools] = useState<Record<string, string[]>>({}) // instanceId -> toolIds
 
   // Sync URL from primary active webview
   useEffect(() => {
@@ -74,6 +75,25 @@ function App() {
     if (webviewEl && !webviewEl.isDestroyed?.()) {
       webviewEl.loadURL(url)
     }
+  }
+
+  const handleToggleTool = (toolId: string) => {
+    const activeId = activeIds[0]
+    if (!activeId) return
+
+    setActiveTools(prev => {
+      const currentTools = prev[activeId] || []
+      const isToolActive = currentTools.includes(toolId)
+
+      const updatedTools = isToolActive
+        ? currentTools.filter(id => id !== toolId)
+        : [...currentTools, toolId]
+
+      return {
+        ...prev,
+        [activeId]: updatedTools
+      }
+    })
   }
 
   useEffect(() => {
@@ -235,6 +255,8 @@ function App() {
         currentLayout={layout}
         currentUrl={currentUrl}
         onNavigate={handleNavigate}
+        activeToolIds={activeTools[activeIds[0]] || []}
+        onToggleTool={handleToggleTool}
       />
 
       <div className="main-content">
@@ -242,6 +264,7 @@ function App() {
           webViews={activeWebViews}
           layout={layout}
           activeIds={activeIds}
+          activeTools={activeTools}
         />
 
         <Launcher
