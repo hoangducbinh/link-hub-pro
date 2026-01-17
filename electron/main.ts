@@ -30,6 +30,7 @@ function createWindow() {
     height: 800,
     minWidth: 800,
     minHeight: 600,
+    show: false,
     titleBarStyle: 'hidden',
     trafficLightPosition: { x: 12, y: 12 },
     webPreferences: {
@@ -41,7 +42,12 @@ function createWindow() {
     },
   })
 
-  mainWindow.maximize()
+  mainWindow.once('ready-to-show', () => {
+    if (mainWindow) {
+      mainWindow.show()
+      mainWindow.maximize()
+    }
+  })
 
   // Register global shortcut
   const shortcut = 'CommandOrControl+O'

@@ -17,6 +17,7 @@ interface TitleBarProps {
     onForward: () => void
     onReload: () => void
     onToggleLauncher: () => void
+    onToggleMissionControl: () => void
     onSetLayout: (layout: string) => void
     currentLayout: string
 }
@@ -26,6 +27,7 @@ const TitleBar: React.FC<TitleBarProps> = ({
     onForward,
     onReload,
     onToggleLauncher,
+    onToggleMissionControl,
     onSetLayout,
     currentLayout
 }) => {
@@ -49,10 +51,22 @@ const TitleBar: React.FC<TitleBarProps> = ({
             </div>
 
             <div className="title-bar-center no-drag">
-                <button className="launcher-trigger" onClick={onToggleLauncher}>
+                <button
+                    className="launcher-trigger"
+                    onClick={onToggleLauncher}
+                    style={{ marginRight: '8px' }}
+                >
                     <LayoutGrid size={14} strokeWidth={1.5} />
                     <span>Launchpad</span>
                     <span className="shortcut-hint">⌘O</span>
+                </button>
+                <button
+                    className="launcher-trigger"
+                    onClick={onToggleMissionControl}
+                    title="Mission Control"
+                >
+                    <Square size={14} strokeWidth={1.5} />
+                    <span>Mission Control</span>
                 </button>
             </div>
 

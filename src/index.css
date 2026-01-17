@@ -32,101 +32,80 @@ body {
 
 /* Title Bar Styles */
 .title-bar {
-  height: 36px;
-  /* Slightly thinner for a cleaner look */
-  background-color: #1a1a1a;
+  height: 38px;
+  background-color: rgba(26, 26, 26, 0.8);
+  backdrop-filter: blur(20px);
   display: flex;
   align-items: center;
   user-select: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  position: relative;
-  z-index: 10000;
-  padding: 0 10px;
-  -webkit-app-region: drag;
-  gap: 8px;
-}
-
-.title-bar::after {
-  content: '';
-  position: absolute;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  position: fixed;
+  /* Fixed to top */
   top: 0;
   left: 0;
   right: 0;
-  bottom: 0;
-  z-index: -1;
-  /* Background drag area */
+  z-index: 10001;
+  /* Above overlays */
+  padding: 0 12px;
+  -webkit-app-region: drag;
+  gap: 8px;
 }
 
 /* Ensure traffic lights are clickable and not blocked */
 .macos-traffic-lights-spacer {
   width: 72px;
   height: 100%;
-  -webkit-app-region: no-drag;
 }
 
 .no-drag {
   -webkit-app-region: no-drag;
-  cursor: default;
 }
 
 .title-bar-actions,
 .title-bar-layouts,
 .window-controls {
   display: flex;
-  gap: 2px;
-  align-items: center;
+  gap: 4px;
 }
 
 .title-bar-center {
   flex: 1;
   display: flex;
   justify-content: center;
-  pointer-events: none;
-  /* Let drag pass through center area unless clicking button */
-}
-
-.title-bar-center>* {
-  pointer-events: auto;
-  /* Re-enable for the launcher trigger */
 }
 
 .title-bar button {
   background: transparent;
   border: none;
-  color: rgba(255, 255, 255, 0.6);
-  width: 28px;
-  height: 28px;
+  color: rgba(255, 255, 255, 0.5);
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  border-radius: 6px;
-  transition: all 0.15s ease;
-  padding: 0;
+  border-radius: 8px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .title-bar button:hover {
   background-color: rgba(255, 255, 255, 0.1);
-  color: #fff;
-}
-
-.title-bar button:active {
-  background-color: rgba(255, 255, 255, 0.15);
-  transform: translateY(0.5px);
+  color: white;
 }
 
 .title-bar button.active {
-  color: #0078d4;
-  background-color: rgba(0, 120, 212, 0.1);
+  color: #fff;
+  background-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .title-bar .launcher-trigger {
   width: auto;
-  padding: 0 12px;
+  padding: 0 14px;
   background-color: rgba(255, 255, 255, 0.05);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
-  gap: 6px;
+  gap: 8px;
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
@@ -137,10 +116,7 @@ body {
 
 .title-bar .launcher-trigger span.shortcut-hint {
   opacity: 0.3;
-  font-size: 10px;
-  background: rgba(0, 0, 0, 0.3);
-  padding: 1px 4px;
-  border-radius: 3px;
+  font-size: 11px;
 }
 
 .window-controls {
@@ -149,7 +125,6 @@ body {
 
 .control-btn.close:hover {
   background-color: #e81123 !important;
-  color: white !important;
 }
 
 .app-container {
@@ -164,4 +139,6 @@ body {
   flex: 1;
   position: relative;
   overflow: hidden;
+  margin-top: 38px;
+  /* Offset for fixed title bar */
 }

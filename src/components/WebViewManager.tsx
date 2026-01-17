@@ -3,6 +3,8 @@ import React from 'react'
 export interface WebViewInfo {
     id: string
     url: string
+    name: string
+    screenshot?: string // Data URL
 }
 
 interface WebViewManagerProps {
@@ -18,15 +20,17 @@ const WebViewManager: React.FC<WebViewManagerProps> = ({ webViews, layout, activ
     const getStyleForWebView = (wvId: string) => {
         const slotIndex = activeIds.indexOf(wvId)
 
-        // If not in a slot, hide it
+        // If not in a slot, hide it visually but keep it "active" for capture
         if (slotIndex === -1) {
             return {
-                display: 'none',
+                opacity: 0,
+                pointerEvents: 'none',
                 width: '100%',
                 height: '100%',
                 position: 'absolute',
                 top: 0,
                 left: 0,
+                zIndex: -1,
             } as React.CSSProperties
         }
 
