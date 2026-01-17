@@ -77,7 +77,21 @@ export const screenshotTool: Tool = {
                 canvas.height = h * scaleY;
                 const g = canvas.getContext('2d');
                 if (g) {
+                    // 1. Draw the underlying website
                     g.drawImage(img, x * scaleX, y * scaleY, w * scaleX, h * scaleY, 0, 0, w * scaleX, h * scaleY);
+
+                    // 2. Overlay other tool layers (Draw, Highlight, Measure, etc.)
+                    // We look for all canvases in the container that are NOT the current screenshot selection canvas
+                    const allCanvases = ctx.containerEl.querySelectorAll('canvas');
+                    allCanvases.forEach(otherCanvas => {
+                        if (otherCanvas !== ctx.canvasEl) {
+                            g.drawImage(
+                                otherCanvas as HTMLCanvasElement,
+                                x, y, w, h, // source (screen coords)
+                                0, 0, w * scaleX, h * scaleY // destination (pixel coords)
+                            );
+                        }
+                    });
 
                     // Copy to clipboard
                     canvas.toBlob(blob => {

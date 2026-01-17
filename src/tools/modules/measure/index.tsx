@@ -28,29 +28,30 @@ export const measureTool: Tool = {
             y: e.clientY - rect.top
         };
 
-        // Trigger redraw
-        const canvas = ctx.canvasEl;
-        const g = canvas.getContext('2d');
-        if (g) {
-            g.clearRect(0, 0, canvas.width, canvas.height);
-            g.beginPath();
-            g.setLineDash([5, 5]);
-            g.strokeStyle = '#3b82f6';
-            g.lineWidth = 2;
-            g.moveTo(state.start.x, state.start.y);
-            g.lineTo(state.current.x, state.current.y);
-            g.stroke();
+        requestAnimationFrame(() => {
+            const canvas = ctx.canvasEl;
+            const g = canvas.getContext('2d');
+            if (g && state.current) {
+                g.clearRect(0, 0, canvas.width, canvas.height);
+                g.beginPath();
+                g.setLineDash([5, 5]);
+                g.strokeStyle = '#3b82f6';
+                g.lineWidth = 2;
+                g.moveTo(state.start!.x, state.start!.y);
+                g.lineTo(state.current.x, state.current.y);
+                g.stroke();
 
-            // Draw rectangle helper
-            g.setLineDash([]);
-            g.strokeStyle = 'rgba(59, 130, 246, 0.2)';
-            g.strokeRect(
-                Math.min(state.start.x, state.current.x),
-                Math.min(state.start.y, state.current.y),
-                Math.abs(state.current.x - state.start.x),
-                Math.abs(state.current.y - state.start.y)
-            );
-        }
+                // Draw rectangle helper
+                g.setLineDash([]);
+                g.strokeStyle = 'rgba(59, 130, 246, 0.2)';
+                g.strokeRect(
+                    Math.min(state.start!.x, state.current.x),
+                    Math.min(state.start!.y, state.current.y),
+                    Math.abs(state.current.x - state.start!.x),
+                    Math.abs(state.current.y - state.start!.y)
+                );
+            }
+        });
     },
 
     onMouseUp: (e, ctx) => {

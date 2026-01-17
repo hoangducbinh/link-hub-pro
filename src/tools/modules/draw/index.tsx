@@ -13,6 +13,29 @@ export const drawTool: Tool = {
     icon: <Pencil size={18} />,
     description: 'Draw directly on the screen overlay',
 
+    onEnable: (ctx) => {
+        const state = toolStates[ctx.webviewId];
+        if (state && state.paths.length > 0) {
+            const g = ctx.canvasEl.getContext('2d');
+            if (g) {
+                g.clearRect(0, 0, ctx.canvasEl.width, ctx.canvasEl.height);
+                state.paths.forEach(p => {
+                    if (p.points.length < 2) return;
+                    g.beginPath();
+                    g.strokeStyle = p.color;
+                    g.lineWidth = p.width;
+                    g.lineCap = 'round';
+                    g.lineJoin = 'round';
+                    g.moveTo(p.points[0].x, p.points[0].y);
+                    for (let i = 1; i < p.points.length; i++) {
+                        g.lineTo(p.points[i].x, p.points[i].y);
+                    }
+                    g.stroke();
+                });
+            }
+        }
+    },
+
     onMouseDown: (e, ctx) => {
         const rect = ctx.containerEl.getBoundingClientRect();
         const x = e.clientX - rect.left;
@@ -30,34 +53,36 @@ export const drawTool: Tool = {
         if (!state || !state.currentPath) return;
 
         const rect = ctx.containerEl.getBoundingClientRect();
-        state.currentPath.push({
-            x: e.clientX - rect.left,
-            y: e.clientY - rect.top
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        state.currentPath.push({ x, y });
+
+        // Use requestAnimationFrame for smooth drawing
+        requestAnimationFrame(() => {
+            const canvas = ctx.canvasEl;
+            const g = canvas.getContext('2d');
+            if (g && state.currentPath) {
+                g.clearRect(0, 0, canvas.width, canvas.height);
+
+                const drawPath = (p: Path) => {
+                    if (p.points.length < 2) return;
+                    g.beginPath();
+                    g.strokeStyle = p.color;
+                    g.lineWidth = p.width;
+                    g.lineCap = 'round';
+                    g.lineJoin = 'round';
+                    g.moveTo(p.points[0].x, p.points[0].y);
+                    for (let i = 1; i < p.points.length; i++) {
+                        g.lineTo(p.points[i].x, p.points[i].y);
+                    }
+                    g.stroke();
+                };
+
+                state.paths.forEach(drawPath);
+                drawPath({ points: state.currentPath, color: state.color, width: state.width });
+            }
         });
-
-        const canvas = ctx.canvasEl;
-        const g = canvas.getContext('2d');
-        if (g) {
-            // We redrawing everything for now (simple approach)
-            g.clearRect(0, 0, canvas.width, canvas.height);
-
-            const drawPath = (p: Path) => {
-                if (p.points.length < 2) return;
-                g.beginPath();
-                g.strokeStyle = p.color;
-                g.lineWidth = p.width;
-                g.lineCap = 'round';
-                g.lineJoin = 'round';
-                g.moveTo(p.points[0].x, p.points[0].y);
-                for (let i = 1; i < p.points.length; i++) {
-                    g.lineTo(p.points[i].x, p.points[i].y);
-                }
-                g.stroke();
-            };
-
-            state.paths.forEach(drawPath);
-            drawPath({ points: state.currentPath, color: state.color, width: state.width });
-        }
     },
 
     onMouseUp: (e, ctx) => {

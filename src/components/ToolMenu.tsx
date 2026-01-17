@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Wrench } from 'lucide-react';
 import { registry } from '../tools';

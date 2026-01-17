@@ -11,8 +11,9 @@ interface Note {
 
 const StoreKey = 'linkhub-notes-v1';
 
-const StickyNotesUI: React.FC<{ _webviewId: string, url: string }> = ({ _webviewId, url }) => {
+const StickyNotesUI: React.FC<{ url: string }> = ({ url }) => {
     const [notes, setNotes] = useState<Note[]>([]);
+    const [dragState, setDragState] = useState<{ id: string, offsetX: number, offsetY: number } | null>(null);
 
     useEffect(() => {
         const saved = localStorage.getItem(`${StoreKey}-${url}`);
@@ -25,7 +26,8 @@ const StickyNotesUI: React.FC<{ _webviewId: string, url: string }> = ({ _webview
     };
 
     const addNote = (x: number, y: number) => {
-        const newNote: Note = { id: Date.now().toString(), text: '', x, y };
+        // Offset so it spawns under cursor better
+        const newNote: Note = { id: Date.now().toString(), text: '', x: x - 10, y: y - 10 };
         save([...notes, newNote]);
     };
 
@@ -37,8 +39,37 @@ const StickyNotesUI: React.FC<{ _webviewId: string, url: string }> = ({ _webview
         save(notes.filter(n => n.id !== id));
     };
 
+    const handleMouseDown = (e: React.MouseEvent, note: Note) => {
+        // Don't start drag if clicking textarea (user wants to type)
+        if ((e.target as HTMLElement).tagName === 'TEXTAREA') return;
+
+        setDragState({
+            id: note.id,
+            offsetX: e.clientX - note.x,
+            offsetY: e.clientY - note.y
+        });
+    };
+
+    const handleMouseMove = (e: React.MouseEvent) => {
+        if (!dragState) return;
+        const newX = e.clientX - dragState.offsetX;
+        const newY = e.clientY - dragState.offsetY;
+        setNotes(prev => prev.map(n => n.id === dragState.id ? { ...n, x: newX, y: newY } : n));
+    };
+
+    const handleMouseUp = () => {
+        if (dragState) {
+            save(notes);
+            setDragState(null);
+        }
+    };
+
     return (
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+        <div
+            style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+        >
             <div
                 style={{ position: 'absolute', inset: 0, pointerEvents: 'auto' }}
                 onDoubleClick={(e) => {
@@ -49,6 +80,7 @@ const StickyNotesUI: React.FC<{ _webviewId: string, url: string }> = ({ _webview
             {notes.map(note => (
                 <div
                     key={note.id}
+                    onMouseDown={(e) => handleMouseDown(e, note)}
                     style={{
                         position: 'absolute',
                         left: note.x,
@@ -61,9 +93,11 @@ const StickyNotesUI: React.FC<{ _webviewId: string, url: string }> = ({ _webview
                         borderRadius: '4px',
                         zIndex: 1003,
                         pointerEvents: 'auto',
-                        cursor: 'move',
+                        cursor: dragState?.id === note.id ? 'grabbing' : 'move',
                         display: 'flex',
-                        flexDirection: 'column'
+                        flexDirection: 'column',
+                        border: '1px solid rgba(0,0,0,0.05)',
+                        transition: dragState?.id === note.id ? 'none' : 'transform 0.1s'
                     }}
                 >
                     <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '4px' }}>
@@ -76,6 +110,7 @@ const StickyNotesUI: React.FC<{ _webviewId: string, url: string }> = ({ _webview
                     <textarea
                         value={note.text}
                         onChange={(e) => updateNote(note.id, e.target.value)}
+                        onMouseDown={(e) => e.stopPropagation()} // Critical: allow text interaction
                         placeholder="Type here..."
                         style={{
                             flex: 1,
@@ -100,7 +135,8 @@ const StickyNotesUI: React.FC<{ _webviewId: string, url: string }> = ({ _webview
                 padding: '4px 12px',
                 borderRadius: '20px',
                 fontSize: '11px',
-                opacity: 0.7
+                opacity: 0.7,
+                pointerEvents: 'none'
             }}>
                 Double click to add a sticky note
             </div>
@@ -119,6 +155,6 @@ export const stickyNoteTool: Tool = {
         // For now, we'll use a placeholder or try to access it via context if we expanded it.
         // Let's assume we can get it from the webview element.
         const url = ctx.webviewEl?.getURL?.() || 'global';
-        return <StickyNotesUI _webviewId={ctx.webviewId} url={url} />;
+        return <StickyNotesUI url={url} />;
     }
 };

@@ -8,43 +8,50 @@ interface ToolOverlayProps {
 
 const ToolOverlay: React.FC<ToolOverlayProps> = ({ webviewId, activeToolIds }) => {
     const containerRef = useRef<HTMLDivElement>(null);
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const [context, setContext] = useState<ToolContext | null>(null);
+    const canvasRefs = useRef<Record<string, HTMLCanvasElement>>({});
+    const [webviewEl, setWebviewEl] = useState<any>(null);
 
     useEffect(() => {
-        const webviewEl = document.getElementById(`webview-${webviewId}`);
-        if (containerRef.current && canvasRef.current && webviewEl) {
-            setContext({
-                webviewId,
-                webviewEl,
-                containerEl: containerRef.current,
-                canvasEl: canvasRef.current,
-                activeToolIds
-            });
-        }
-    }, [webviewId, activeToolIds]);
+        setWebviewEl(document.getElementById(`webview-${webviewId}`));
+    }, [webviewId]);
 
-    // Handle Resize
+    // Update canvas sizes on resize
     useEffect(() => {
         const updateSize = () => {
-            if (containerRef.current && canvasRef.current) {
+            if (containerRef.current) {
                 const { width, height } = containerRef.current.getBoundingClientRect();
-                canvasRef.current.width = width;
-                canvasRef.current.height = height;
+                Object.values(canvasRefs.current).forEach(canvas => {
+                    if (canvas) {
+                        canvas.width = width;
+                        canvas.height = height;
+                    }
+                });
             }
         };
 
         window.addEventListener('resize', updateSize);
         updateSize();
         return () => window.removeEventListener('resize', updateSize);
-    }, [context]);
+    }, [activeToolIds, webviewEl]);
+
+    const getToolContext = (toolId: string): ToolContext | null => {
+        const canvas = canvasRefs.current[toolId];
+        if (!containerRef.current || !canvas || !webviewEl) return null;
+        return {
+            webviewId,
+            webviewEl,
+            containerEl: containerRef.current,
+            canvasEl: canvas,
+            activeToolIds
+        };
+    };
 
     const handleMouseEvent = (e: React.MouseEvent, type: 'onMouseDown' | 'onMouseMove' | 'onMouseUp') => {
-        if (!context) return;
         activeToolIds.forEach(id => {
             const tool = registry.getTool(id);
             if (tool && tool[type]) {
-                tool[type]!(e, context);
+                const ctx = getToolContext(id);
+                if (ctx) tool[type]!(e, ctx);
             }
         });
     };
@@ -64,33 +71,41 @@ const ToolOverlay: React.FC<ToolOverlayProps> = ({ webviewId, activeToolIds }) =
                 left: 0,
                 width: '100%',
                 height: '100%',
-                pointerEvents: activeToolIds.length > 0 ? 'auto' : 'none',
+                pointerEvents: 'auto',
                 zIndex: 100,
                 overflow: 'hidden'
             }}
         >
-            <canvas
-                ref={canvasRef}
-                style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                }}
-            />
-            {context && activeToolIds.map(toolId => {
+            {/* Render a dedicated canvas for each active tool */}
+            {activeToolIds.map(toolId => (
+                <canvas
+                    key={toolId}
+                    ref={el => { if (el) canvasRefs.current[toolId] = el; }}
+                    style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        pointerEvents: 'none',
+                    }}
+                />
+            ))}
+
+            {/* Render any UI elements from tools */}
+            {activeToolIds.map(toolId => {
                 const tool = registry.getTool(toolId);
-                return tool?.render ? (
+                const ctx = getToolContext(toolId);
+                return tool?.render && ctx ? (
                     <div
-                        key={toolId}
+                        key={`ui-${toolId}`}
                         style={{
                             position: 'absolute',
                             inset: 0,
-                            pointerEvents: 'none' // Allow events to pass through to the overlay div
+                            pointerEvents: 'none'
                         }}
                     >
-                        {tool.render(context)}
+                        {tool.render(ctx)}
                     </div>
                 ) : null;
             })}
