@@ -20,31 +20,6 @@ function App() {
   const [activeWebViews, setActiveWebViews] = useState<WebViewInfo[]>([])
   const [activeIds, setActiveIds] = useState<string[]>([]) // List of instanceIds assigned to panes
 
-  // Theme state with system default
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    const saved = localStorage.getItem('theme') as 'light' | 'dark' | null
-    if (saved) return saved
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-  })
-
-  // Apply theme to document
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme)
-    localStorage.setItem('theme', theme)
-  }, [theme])
-
-  // Listen for system theme changes
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-    const handleChange = (e: MediaQueryListEvent) => {
-      if (!localStorage.getItem('theme')) {
-        setTheme(e.matches ? 'dark' : 'light')
-      }
-    }
-    mediaQuery.addEventListener('change', handleChange)
-    return () => mediaQuery.removeEventListener('change', handleChange)
-  }, [])
-
   useEffect(() => {
     const removeListener = window.electronAPI.onToggleLauncher(() => {
       setIsLauncherOpen((prev) => !prev)
@@ -52,6 +27,12 @@ function App() {
     })
     return () => removeListener()
   }, [])
+
+  useEffect(() => {
+    if (activeWebViews.length === 0 && isMissionControlOpen) {
+      setIsMissionControlOpen(false)
+    }
+  }, [activeWebViews.length, isMissionControlOpen])
 
   const handleSelectApp = (app: AppIcon, forceNewInstance = false) => {
     setIsLauncherOpen(false)
@@ -107,11 +88,15 @@ function App() {
     if (!activeInstanceId) return
 
     const wv = document.getElementById(`webview-${activeInstanceId}`) as any
-    if (!wv || wv.tagName !== 'WEBVIEW') return
+    if (!wv || wv.tagName !== 'WEBVIEW' || wv.isDestroyed?.()) return
 
-    if (type === 'back' && wv.canGoBack()) wv.goBack()
-    if (type === 'forward' && wv.canGoForward()) wv.goForward()
-    if (type === 'reload') wv.reload()
+    try {
+      if (type === 'back' && wv.canGoBack()) wv.goBack()
+      if (type === 'forward' && wv.canGoForward()) wv.goForward()
+      if (type === 'reload') wv.reload()
+    } catch (e) {
+      console.warn('Browser action failed:', e)
+    }
   }
 
   // Proactive snapshot capture for visible webviews
@@ -119,21 +104,34 @@ function App() {
     const timer = setInterval(async () => {
       if (isMissionControlOpen || activeIds.length === 0) return
 
-      const updatedWebViews = await Promise.all(activeWebViews.map(async (wv) => {
+      const updatedWebViews = [...activeWebViews]
+
+      for (let i = 0; i < updatedWebViews.length; i++) {
+        const wv = updatedWebViews[i]
         // Only refresh visible ones or those without a snapshot
         if (activeIds.includes(wv.instanceId) || !wv.screenshot) {
           const webviewEl = document.getElementById(`webview-${wv.instanceId}`) as any
           if (webviewEl && webviewEl.tagName === 'WEBVIEW') {
             try {
+              // Vital checks for sequential stability
+              if (webviewEl.isDestroyed?.() || webviewEl.isLoading?.()) {
+                continue
+              }
+
               const image = await webviewEl.capturePage()
-              return { ...wv, screenshot: image.toDataURL() }
-            } catch (e) {
-              return wv
+              updatedWebViews[i] = { ...wv, screenshot: image.toDataURL() }
+
+              // Small yield to main thread to prevent UI lock and race conditions
+              await new Promise(r => setTimeout(r, 50))
+            } catch (e: any) {
+              // Ignore common disposed race condition
+              if (!e.message?.includes('disposed')) {
+                console.warn(`Snapshot capture failed for ${wv.instanceId}:`, e.message)
+              }
             }
           }
         }
-        return wv
-      }))
+      }
 
       // Only update if there's an actual change 
       setActiveWebViews((prev) => {
@@ -163,8 +161,6 @@ function App() {
         onToggleMissionControl={handleToggleMissionControl}
         onSetLayout={(l: string) => setLayout(l)}
         currentLayout={layout}
-        theme={theme}
-        onToggleTheme={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
       />
 
       <div className="main-content">

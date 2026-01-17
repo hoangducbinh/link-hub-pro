@@ -10,8 +10,6 @@ import {
     Rows,
     Maximize2,
     Square,
-    Sun,
-    Moon,
     Layout
 } from 'lucide-react'
 
@@ -23,8 +21,6 @@ interface TitleBarProps {
     onToggleMissionControl: () => void
     onSetLayout: (layout: string) => void
     currentLayout: string
-    theme: 'light' | 'dark'
-    onToggleTheme: () => void
 }
 
 const TitleBar: React.FC<TitleBarProps> = ({
@@ -35,14 +31,12 @@ const TitleBar: React.FC<TitleBarProps> = ({
     onToggleMissionControl,
     onSetLayout,
     currentLayout,
-    theme,
-    onToggleTheme
 }) => {
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0
 
     return (
         <div className="title-bar">
-            {/* Clickable spacer for macOS traffic lights to ensure they aren't dimmed */}
+            {/* Clickable spacer for macOS traffic lights */}
             {isMac && <div className="macos-traffic-lights-spacer"></div>}
 
             <div className="title-bar-actions no-drag">
@@ -77,15 +71,7 @@ const TitleBar: React.FC<TitleBarProps> = ({
                 </button>
             </div>
 
-            <button
-                className="tool-btn"
-                onClick={onToggleTheme}
-                title={theme === 'dark' ? 'Switch to Light' : 'Switch to Dark'}
-            >
-                {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
-
-            <div className="layout-group" style={{ display: 'flex', gap: '4px', borderLeft: '1px solid var(--border-color)', paddingLeft: '8px' }}>
+            <div className="layout-group no-drag" style={{ display: 'flex', gap: '4px', borderLeft: '1px solid var(--border-color)', paddingLeft: '8px' }}>
                 <button
                     className={`tool-btn ${currentLayout === 'single' ? 'active' : ''}`}
                     onClick={() => onSetLayout('single')}
@@ -101,7 +87,7 @@ const TitleBar: React.FC<TitleBarProps> = ({
                     <Columns size={15} strokeWidth={1.5} />
                 </button>
                 <button
-                    className={currentLayout === 'split-v' ? 'active' : ''}
+                    className={`tool-btn ${currentLayout === 'split-v' ? 'active' : ''}`}
                     onClick={() => onSetLayout('split-v')}
                     title="Split Vertical"
                 >
@@ -111,13 +97,13 @@ const TitleBar: React.FC<TitleBarProps> = ({
 
             {!isMac && (
                 <div className="window-controls no-drag">
-                    <button className="control-btn" onClick={() => window.electronAPI.minimize()}>
+                    <button className="control-btn" onClick={() => (window as any).electronAPI.minimize()}>
                         <Minus size={14} strokeWidth={1.5} />
                     </button>
-                    <button className="control-btn" onClick={() => window.electronAPI.maximize()}>
+                    <button className="control-btn" onClick={() => (window as any).electronAPI.maximize()}>
                         <Maximize2 size={14} strokeWidth={1.5} />
                     </button>
-                    <button className="control-btn close" onClick={() => window.electronAPI.close()}>
+                    <button className="control-btn close" onClick={() => (window as any).electronAPI.close()}>
                         <X size={14} strokeWidth={1.5} />
                     </button>
                 </div>

@@ -1,48 +1,36 @@
 import React from 'react'
 
 export interface WebViewInfo {
-    instanceId: string;
-    appId: string;
-    url: string;
-    name: string;
-    partition?: string;
-    screenshot?: string;
+    instanceId: string
+    appId: string
+    url: string
+    name: string
+    screenshot?: string
+    partition?: string
 }
 
 interface WebViewManagerProps {
     webViews: WebViewInfo[]
     layout: string
-    activeIds: string[] // List of instanceIds
+    activeIds: string[] // instanceIds
 }
 
 const WebViewManager: React.FC<WebViewManagerProps> = ({ webViews, layout, activeIds }) => {
-    // We keep ALL webviews in the DOM to preserve state, 
-    // but only some are assigned to "slots" in the layout.
 
-    const getStyleForWebView = (instanceId: string) => {
+    const getStyleForWebView = (instanceId: string): React.CSSProperties => {
         const slotIndex = activeIds.indexOf(instanceId)
-
-        // If not in a slot, hide it visually but keep it "active" for capture
-        if (slotIndex === -1) {
-            return {
-                opacity: 0,
-                pointerEvents: 'none',
-                width: '100%',
-                height: '100%',
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                zIndex: -1,
-            } as React.CSSProperties
-        }
+        const isActive = slotIndex !== -1
 
         // Determine layout styles
         const style: React.CSSProperties = {
-            display: 'flex',
+            display: isActive ? 'block' : 'none', // Use block for container
             position: 'absolute',
-            border: activeIds.length > 1 ? '1px solid #333' : 'none',
             backgroundColor: '#000',
-            zIndex: 1,
+            zIndex: isActive ? 10 : 0,
+            transform: 'none',
+            filter: 'none',
+            backdropFilter: 'none',
+            opacity: 1,
         }
 
         if (layout === 'single') {
@@ -50,29 +38,57 @@ const WebViewManager: React.FC<WebViewManagerProps> = ({ webViews, layout, activ
         } else if (layout === 'split-h') {
             style.width = '50%'; style.height = '100%'; style.top = 0
             style.left = slotIndex === 0 ? 0 : '50%'
+            style.borderRight = slotIndex === 0 ? '1px solid #333' : 'none'
         } else if (layout === 'split-v') {
             style.width = '100%'; style.height = '50%'; style.left = 0
             style.top = slotIndex === 0 ? 0 : '50%'
+            style.borderBottom = slotIndex === 0 ? '1px solid #333' : 'none'
         }
 
         return style
     }
 
     return (
-        <div className="webview-container" style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
+        <div style={{
+            width: '100%',
+            height: '100%',
+            position: 'absolute', // Ensure fill
+            top: 0,
+            left: 0,
+            background: 'linear-gradient(180deg, #ffffff 0%, #bcd9f6ff 100%)',
+            filter: 'none',
+            transform: 'none'
+        }}>
             {webViews.map((wv) => (
-                <webview
-                    key={wv.instanceId}
-                    id={`webview-${wv.instanceId}`}
-                    src={wv.url}
-                    style={getStyleForWebView(wv.instanceId)}
-                    partition={wv.partition || 'persist:main'}
-                    allowpopups="true"
-                />
+                <div key={wv.instanceId} style={getStyleForWebView(wv.instanceId)}>
+                    <webview
+                        id={`webview-${wv.instanceId}`}
+                        src={wv.url}
+                        partition={wv.partition || 'persist:main'}
+                        allowpopups="true"
+                        style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            border: 'none',
+                        }}
+                    />
+                </div>
             ))}
             {activeIds.length === 0 && (
-                <div className="empty-state" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#888' }}>
-                    Please open a website from the Launcher (Cmd+O)
+                <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+                    <webview
+                        src="https://www.google.com"
+                        allowpopups="true"
+                        partition="persist:main"
+                        style={{
+                            width: '100%',
+                            height: '100%',
+                            border: 'none',
+                        }}
+                    />
                 </div>
             )}
         </div>

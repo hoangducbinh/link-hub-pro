@@ -21,6 +21,15 @@ const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
 
+// Handle "Render frame was disposed" race condition globally
+process.on('uncaughtException', (error) => {
+  if (error.message?.includes('Render frame was disposed')) {
+    // Ignore this common Electron race condition
+    return;
+  }
+  console.error('Uncaught Exception:', error);
+});
+
 let mainWindow: BrowserWindow | null = null
 
 function createWindow() {
@@ -114,8 +123,12 @@ app.on('web-contents-created', (_, contents) => {
       }
 
       // Deny new window and navigate the current webview instead
-      // We use a small delay to ensure the event loop is clear
-      contents.loadURL(url)
+      // Use setImmediate to avoid "disposed frame" during the event callback
+      setImmediate(() => {
+        if (!contents.isDestroyed()) {
+          contents.loadURL(url).catch(e => console.error('Failed to load URL in webview:', e))
+        }
+      })
       return { action: 'deny' }
     })
   }
