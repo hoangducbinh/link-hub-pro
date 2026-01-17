@@ -75,9 +75,26 @@ const Launcher: React.FC<LauncherProps> = ({ isOpen, onClose, onSelect, apps }) 
                             <input
                                 ref={inputRef}
                                 type="text"
-                                placeholder="Search apps or websites..."
+                                placeholder="Search or enter URL..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && search.trim()) {
+                                        const query = search.trim();
+                                        // Simple URL detection
+                                        const isUrl = query.includes('.') && !query.includes(' ') || query.startsWith('http');
+                                        if (isUrl) {
+                                            const url = query.startsWith('http') ? query : `https://${query}`;
+                                            onSelect({
+                                                id: `custom-${Date.now()}`,
+                                                name: query,
+                                                url: url
+                                            });
+                                        } else if (filteredApps.length > 0) {
+                                            onSelect(filteredApps[0]);
+                                        }
+                                    }
+                                }}
                                 style={{
                                     width: '100%',
                                     padding: '16px 16px 16px 48px',
@@ -89,6 +106,19 @@ const Launcher: React.FC<LauncherProps> = ({ isOpen, onClose, onSelect, apps }) 
                                     outline: 'none',
                                 }}
                             />
+                            {search.trim() && (
+                                <div style={{
+                                    position: 'absolute',
+                                    right: '16px',
+                                    top: '50%',
+                                    transform: 'translateY(-50%)',
+                                    fontSize: '12px',
+                                    opacity: 0.5,
+                                    pointerEvents: 'none'
+                                }}>
+                                    Press Enter
+                                </div>
+                            )}
                         </div>
 
                         {/* Grid */}

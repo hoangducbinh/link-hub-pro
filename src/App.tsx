@@ -17,8 +17,64 @@ function App() {
   const [isLauncherOpen, setIsLauncherOpen] = useState(false)
   const [isMissionControlOpen, setIsMissionControlOpen] = useState(false)
   const [layout, setLayout] = useState('single')
-  const [activeWebViews, setActiveWebViews] = useState<WebViewInfo[]>([])
-  const [activeIds, setActiveIds] = useState<string[]>([]) // List of instanceIds assigned to panes
+
+  // Initialize with Google by default
+  const [activeWebViews, setActiveWebViews] = useState<WebViewInfo[]>(() => {
+    const googleApp = DEFAULT_APPS[0]
+    return [{
+      instanceId: `inst-${googleApp.id}-default`,
+      appId: googleApp.id,
+      url: googleApp.url,
+      name: googleApp.name,
+      partition: 'persist:main'
+    }]
+  })
+  const [activeIds, setActiveIds] = useState<string[]>(() => [`inst-${DEFAULT_APPS[0].id}-default`])
+  const [currentUrl, setCurrentUrl] = useState('')
+
+  // Sync URL from primary active webview
+  useEffect(() => {
+    const activeId = activeIds[0]
+    if (!activeId) {
+      setCurrentUrl('')
+      return
+    }
+
+    const wv = activeWebViews.find(w => w.instanceId === activeId)
+    if (wv) setCurrentUrl(wv.url)
+
+    const webviewEl = document.getElementById(`webview-${activeId}`) as any
+    if (!webviewEl) return
+
+    const updateUrl = () => {
+      if (!webviewEl.isDestroyed?.()) {
+        const newUrl = webviewEl.getURL()
+        setCurrentUrl(newUrl)
+        // Update URL in our state list too so it's fresh for Mission Control/reloads
+        setActiveWebViews(prev => prev.map(w =>
+          w.instanceId === activeId ? { ...w, url: newUrl } : w
+        ))
+      }
+    }
+
+    webviewEl.addEventListener('did-navigate', updateUrl)
+    webviewEl.addEventListener('did-navigate-in-page', updateUrl)
+
+    return () => {
+      webviewEl.removeEventListener('did-navigate', updateUrl)
+      webviewEl.removeEventListener('did-navigate-in-page', updateUrl)
+    }
+  }, [activeIds[0], activeWebViews.length]) // Re-run when primary shift or lists changes
+
+  const handleNavigate = (url: string) => {
+    const activeId = activeIds[0]
+    if (!activeId) return
+
+    const webviewEl = document.getElementById(`webview-${activeId}`) as any
+    if (webviewEl && !webviewEl.isDestroyed?.()) {
+      webviewEl.loadURL(url)
+    }
+  }
 
   useEffect(() => {
     const removeListener = window.electronAPI.onToggleLauncher(() => {
@@ -33,6 +89,22 @@ function App() {
       setIsMissionControlOpen(false)
     }
   }, [activeWebViews.length, isMissionControlOpen])
+
+  // Auto-restore Google if all tabs are closed
+  useEffect(() => {
+    if (activeWebViews.length === 0) {
+      const googleApp = DEFAULT_APPS[0]
+      const defaultId = `inst-${googleApp.id}-restore-${Date.now()}`
+      setActiveWebViews([{
+        instanceId: defaultId,
+        appId: googleApp.id,
+        url: googleApp.url,
+        name: googleApp.name,
+        partition: 'persist:main'
+      }])
+      setActiveIds([defaultId])
+    }
+  }, [activeWebViews.length])
 
   const handleSelectApp = (app: AppIcon, forceNewInstance = false) => {
     setIsLauncherOpen(false)
@@ -161,6 +233,8 @@ function App() {
         onToggleMissionControl={handleToggleMissionControl}
         onSetLayout={(l: string) => setLayout(l)}
         currentLayout={layout}
+        currentUrl={currentUrl}
+        onNavigate={handleNavigate}
       />
 
       <div className="main-content">

@@ -1,6 +1,8 @@
-import { app, BrowserWindow, globalShortcut, ipcMain } from 'electron'
+import { app, BrowserWindow, globalShortcut, ipcMain, session } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+import { ElectronBlocker } from '@cliqz/adblocker-electron'
+import fetch from 'cross-fetch'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -153,4 +155,24 @@ app.on('will-quit', () => {
   globalShortcut.unregisterAll()
 })
 
-app.whenReady().then(createWindow)
+async function setupAdBlocker() {
+  try {
+    const blocker = await ElectronBlocker.fromPrebuiltAdsAndTracking(fetch)
+
+    // Apply to default session
+    blocker.enableBlockingInSession(session.defaultSession)
+
+    // Apply to our specific partition used by webviews
+    const mainSession = session.fromPartition('persist:main')
+    blocker.enableBlockingInSession(mainSession)
+
+    console.log('Ad-blocker initialized for default and persist:main sessions')
+  } catch (error) {
+    console.error('Failed to initialize ad-blocker:', error)
+  }
+}
+
+app.whenReady().then(() => {
+  setupAdBlocker()
+  createWindow()
+})

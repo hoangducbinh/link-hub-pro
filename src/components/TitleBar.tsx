@@ -21,6 +21,8 @@ interface TitleBarProps {
     onToggleMissionControl: () => void
     onSetLayout: (layout: string) => void
     currentLayout: string
+    currentUrl: string
+    onNavigate: (url: string) => void
 }
 
 const TitleBar: React.FC<TitleBarProps> = ({
@@ -31,8 +33,34 @@ const TitleBar: React.FC<TitleBarProps> = ({
     onToggleMissionControl,
     onSetLayout,
     currentLayout,
+    currentUrl,
+    onNavigate,
 }) => {
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0
+    const [inputValue, setInputValue] = React.useState(currentUrl)
+
+    React.useEffect(() => {
+        setInputValue(currentUrl)
+    }, [currentUrl])
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            const query = inputValue.trim()
+            if (!query) return
+
+            // URL detection logic
+            const isUrl = query.includes('.') && !query.includes(' ') || query.startsWith('http') || query.startsWith('localhost')
+            if (isUrl) {
+                const url = query.startsWith('http') ? query : `https://${query}`
+                onNavigate(url)
+            } else {
+                // Fallback to Google Search
+                onNavigate(`https://www.google.com/search?q=${encodeURIComponent(query)}`)
+            }
+            // Blur the input after navigation
+            ; (e.target as HTMLInputElement).blur()
+        }
+    }
 
     return (
         <div className="title-bar">
@@ -51,23 +79,46 @@ const TitleBar: React.FC<TitleBarProps> = ({
                 </button>
             </div>
 
-            <div className="title-bar-center no-drag">
+            <div className="title-bar-center no-drag" style={{ flex: 1, display: 'flex', justifyContent: 'center', padding: '0 20px', gap: '8px' }}>
                 <button
-                    className="launcher-trigger"
+                    className="tool-btn"
                     onClick={onToggleLauncher}
-                    style={{ marginRight: '8px' }}
+                    title="Launcher (Cmd+O)"
                 >
-                    <LayoutGrid size={14} strokeWidth={1.5} />
-                    <span>Launchpad</span>
-                    <span className="shortcut-hint">⌘O</span>
+                    <LayoutGrid size={18} strokeWidth={1.5} />
                 </button>
+
+                <div style={{ flex: 1, maxWidth: '600px', position: 'relative' }}>
+                    <input
+                        type="text"
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        onFocus={(e) => e.target.select()}
+                        placeholder="Search or enter address"
+                        style={{
+                            width: '100%',
+                            height: '28px',
+                            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '6px',
+                            padding: '0 12px',
+                            color: 'var(--text-primary)',
+                            fontSize: '12px',
+                            outline: 'none',
+                            textAlign: 'center',
+                            transition: 'all 0.2s ease',
+                        }}
+                        className="address-bar-input"
+                    />
+                </div>
+
                 <button
-                    className="launcher-trigger"
+                    className="tool-btn"
                     onClick={onToggleMissionControl}
                     title="Mission Control"
                 >
-                    <Square size={14} strokeWidth={1.5} />
-                    <span>Mission Control</span>
+                    <Square size={18} strokeWidth={1.5} />
                 </button>
             </div>
 

@@ -23,9 +23,8 @@ const WebViewManager: React.FC<WebViewManagerProps> = ({ webViews, layout, activ
 
         // Determine layout styles
         const style: React.CSSProperties = {
-            display: isActive ? 'block' : 'none', // Use block for container
+            display: isActive ? 'block' : 'none',
             position: 'absolute',
-            backgroundColor: '#000',
             zIndex: isActive ? 10 : 0,
             transform: 'none',
             filter: 'none',
@@ -38,11 +37,11 @@ const WebViewManager: React.FC<WebViewManagerProps> = ({ webViews, layout, activ
         } else if (layout === 'split-h') {
             style.width = '50%'; style.height = '100%'; style.top = 0
             style.left = slotIndex === 0 ? 0 : '50%'
-            style.borderRight = slotIndex === 0 ? '1px solid #333' : 'none'
+            style.borderRight = slotIndex === 0 ? '1px solid var(--border-color)' : 'none'
         } else if (layout === 'split-v') {
             style.width = '100%'; style.height = '50%'; style.left = 0
             style.top = slotIndex === 0 ? 0 : '50%'
-            style.borderBottom = slotIndex === 0 ? '1px solid #333' : 'none'
+            style.borderBottom = slotIndex === 0 ? '1px solid var(--border-color)' : 'none'
         }
 
         return style
@@ -52,7 +51,7 @@ const WebViewManager: React.FC<WebViewManagerProps> = ({ webViews, layout, activ
         <div style={{
             width: '100%',
             height: '100%',
-            position: 'absolute', // Ensure fill
+            position: 'absolute',
             top: 0,
             left: 0,
             background: 'linear-gradient(180deg, #ffffff 0%, #bcd9f6ff 100%)',
@@ -67,7 +66,7 @@ const WebViewManager: React.FC<WebViewManagerProps> = ({ webViews, layout, activ
                         partition={wv.partition || 'persist:main'}
                         allowpopups="true"
                         style={{
-                            position: 'absolute',
+                            position: 'absolute', // Make it absolute
                             top: 0,
                             left: 0,
                             width: '100%',
@@ -77,20 +76,6 @@ const WebViewManager: React.FC<WebViewManagerProps> = ({ webViews, layout, activ
                     />
                 </div>
             ))}
-            {activeIds.length === 0 && (
-                <div style={{ width: '100%', height: '100%', position: 'relative' }}>
-                    <webview
-                        src="https://www.google.com"
-                        allowpopups="true"
-                        partition="persist:main"
-                        style={{
-                            width: '100%',
-                            height: '100%',
-                            border: 'none',
-                        }}
-                    />
-                </div>
-            )}
         </div>
     )
 }
