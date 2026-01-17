@@ -1,15 +1,15 @@
 import React from 'react'
 import {
-    Square,
     Minus,
     X,
     ChevronLeft,
     ChevronRight,
-    RotateCw,
+    RotateCcw,
     LayoutGrid,
     Columns,
     Rows,
-    Maximize2
+    Maximize2,
+    Square
 } from 'lucide-react'
 
 interface TitleBarProps {
@@ -33,24 +33,26 @@ const TitleBar: React.FC<TitleBarProps> = ({
 
     return (
         <div className="title-bar">
-            <div className="drag-region"></div>
-
-            {/* Darwin (macOS) window controls are handled by the system but we've hidden them. 
-          Actually Electron's trafficLightPosition handles their placement, so we just 
-          need to leave space for them on macOS. */}
+            {/* Clickable spacer for macOS traffic lights to ensure they aren't dimmed */}
             {isMac && <div className="macos-traffic-lights-spacer"></div>}
 
             <div className="title-bar-actions no-drag">
-                <button onClick={onBack} title="Back (Alt+Left)"><ChevronLeft size={16} /></button>
-                <button onClick={onForward} title="Forward (Alt+Right)"><ChevronRight size={16} /></button>
-                <button onClick={onReload} title="Reload (Ctrl+R)"><RotateCw size={16} /></button>
+                <button onClick={onBack} title="Back">
+                    <ChevronLeft size={16} strokeWidth={1.5} />
+                </button>
+                <button onClick={onForward} title="Forward">
+                    <ChevronRight size={16} strokeWidth={1.5} />
+                </button>
+                <button onClick={onReload} title="Reload">
+                    <RotateCcw size={15} strokeWidth={1.5} />
+                </button>
             </div>
 
             <div className="title-bar-center no-drag">
                 <button className="launcher-trigger" onClick={onToggleLauncher}>
-                    <LayoutGrid size={16} style={{ marginRight: '8px' }} />
+                    <LayoutGrid size={14} strokeWidth={1.5} />
                     <span>Launchpad</span>
-                    <span className="shortcut-hint">Cmd+O</span>
+                    <span className="shortcut-hint">⌘O</span>
                 </button>
             </div>
 
@@ -60,29 +62,37 @@ const TitleBar: React.FC<TitleBarProps> = ({
                     onClick={() => onSetLayout('single')}
                     title="Single View"
                 >
-                    <Square size={16} />
+                    <Square size={15} strokeWidth={1.5} />
                 </button>
                 <button
                     className={currentLayout === 'split-h' ? 'active' : ''}
                     onClick={() => onSetLayout('split-h')}
                     title="Split Horizontal"
                 >
-                    <Columns size={16} />
+                    <Columns size={15} strokeWidth={1.5} />
                 </button>
                 <button
                     className={currentLayout === 'split-v' ? 'active' : ''}
                     onClick={() => onSetLayout('split-v')}
                     title="Split Vertical"
                 >
-                    <Rows size={16} />
+                    <Rows size={15} strokeWidth={1.5} />
                 </button>
             </div>
 
-            <div className="window-controls no-drag">
-                <button className="control-btn" onClick={() => window.electronAPI.minimize()}><Minus size={14} /></button>
-                <button className="control-btn" onClick={() => window.electronAPI.maximize()}><Maximize2 size={14} /></button>
-                <button className="control-btn close" onClick={() => window.electronAPI.close()}><X size={14} /></button>
-            </div>
+            {!isMac && (
+                <div className="window-controls no-drag">
+                    <button className="control-btn" onClick={() => window.electronAPI.minimize()}>
+                        <Minus size={14} strokeWidth={1.5} />
+                    </button>
+                    <button className="control-btn" onClick={() => window.electronAPI.maximize()}>
+                        <Maximize2 size={14} strokeWidth={1.5} />
+                    </button>
+                    <button className="control-btn close" onClick={() => window.electronAPI.close()}>
+                        <X size={14} strokeWidth={1.5} />
+                    </button>
+                </div>
+            )}
         </div>
     )
 }
