@@ -87,6 +87,40 @@ ipcMain.on('window-close', () => {
   win?.close()
 })
 
+app.on('web-contents-created', (_, contents) => {
+  // Only apply to guest webviews
+  if (contents.getType() === 'webview') {
+    contents.setWindowOpenHandler(({ url }) => {
+      const allowedHosts = [
+        'accounts.google.com',
+        'github.com/login',
+        'appleid.apple.com',
+        'auth.meta.com',
+        'facebook.com/v15.0/dialog/oauth',
+        'linkedin.com/oauth',
+        'microsoftonline.com',
+        'amazon.com/ap/signin',
+        'twitter.com/oauth',
+        'discord.com/oauth2',
+        'okta.com',
+        'auth0.com'
+      ]
+
+      const isAuthFlow = allowedHosts.some(host => url.includes(host))
+
+      if (isAuthFlow) {
+        // Allow OAuth/Login popups
+        return { action: 'allow' }
+      }
+
+      // Deny new window and navigate the current webview instead
+      // We use a small delay to ensure the event loop is clear
+      contents.loadURL(url)
+      return { action: 'deny' }
+    })
+  }
+})
+
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
