@@ -504,7 +504,7 @@ function App() {
           const activeId = activeIds[0]
           if (!activeId) return
           setActiveWebViews(prev => prev.map(wv =>
-            wv.instanceId === activeId ? { ...wv, isLocked: !wv.isLocked } : wv
+            wv.instanceId === activeId ? { ...wv, isLocked: true } : wv
           ))
         }}
       />
@@ -515,6 +515,8 @@ function App() {
           layout={layout}
           activeIds={activeIds}
           passwordHash={config.security.passwordHash || ''}
+          recoveryHash={config.security.recoveryHash || ''}
+          isGlobalLocked={isLocked}
           onUnlockTab={(instanceId) => {
             setActiveWebViews(prev => prev.map(wv =>
               wv.instanceId === instanceId ? { ...wv, isLocked: false } : wv
@@ -574,6 +576,7 @@ function App() {
         {isLocked && (
           <AppLockOverlay
             hash={config.security.passwordHash || ''}
+            recoveryHash={config.security.recoveryHash || ''}
             onUnlock={() => {
               setIsLocked(false)
               lastActivityRef.current = Date.now()

@@ -20,6 +20,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, config, 
     const [isExportModalOpen, setIsExportModalOpen] = useState(false)
     const [showPasswordSetup, setShowPasswordSetup] = useState(false)
     const [newPassword, setNewPassword] = useState('')
+    const [oldPassword, setOldPassword] = useState('')
+    const [confirmPassword, setConfirmPassword] = useState('')
+    const [newRecoveryKey, setNewRecoveryKey] = useState('')
+    const [confirmRecoveryKey, setConfirmRecoveryKey] = useState('')
+    const [isChangingPassword, setIsChangingPassword] = useState(false)
+    const [passwordError, setPasswordError] = useState('')
     const [importData, setImportData] = useState<AppConfig | null>(null)
 
     useEffect(() => {
@@ -96,11 +102,63 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, config, 
     }
 
     const handleSetPassword = async () => {
-        if (!newPassword) return
+        if (!newPassword || newPassword !== confirmPassword) {
+            setPasswordError('Passwords do not match')
+            return
+        }
+        if (!newRecoveryKey || newRecoveryKey !== confirmRecoveryKey) {
+            setPasswordError('Recovery keys do not match')
+            return
+        }
         const hash = await (window as any).electronAPI.hashPassword(newPassword)
-        updateSecuritySetting({ passwordHash: hash, appLockEnabled: true })
+        const rHash = await (window as any).electronAPI.hashPassword(newRecoveryKey)
+        updateSecuritySetting({
+            passwordHash: hash,
+            recoveryHash: rHash,
+            appLockEnabled: true
+        })
         setNewPassword('')
+        setConfirmPassword('')
+        setNewRecoveryKey('')
+        setConfirmRecoveryKey('')
+        setPasswordError('')
         setShowPasswordSetup(false)
+    }
+
+    const handleChangePassword = async () => {
+        if (!oldPassword || !newPassword || newPassword !== confirmPassword) {
+            setPasswordError('Please fill all fields correctly')
+            return
+        }
+        if (newRecoveryKey && newRecoveryKey !== confirmRecoveryKey) {
+            setPasswordError('Recovery keys do not match')
+            return
+        }
+
+        const isValid = await (window as any).electronAPI.verifyPassword(oldPassword, localConfig.security.passwordHash || '')
+        if (!isValid) {
+            setPasswordError('Incorrect old password')
+            return
+        }
+
+        const newHash = await (window as any).electronAPI.hashPassword(newPassword)
+        const updates: Partial<SecurityConfig> = { passwordHash: newHash }
+
+        if (newRecoveryKey) {
+            updates.recoveryHash = await (window as any).electronAPI.hashPassword(newRecoveryKey)
+        }
+
+        updateSecuritySetting(updates)
+
+        // Reset states
+        setOldPassword('')
+        setNewPassword('')
+        setConfirmPassword('')
+        setNewRecoveryKey('')
+        setConfirmRecoveryKey('')
+        setIsChangingPassword(false)
+        setPasswordError('')
+        alert('Security credentials updated successfully!')
     }
 
     const handleImportFile = async () => {
@@ -264,13 +322,74 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, config, 
                                     </div>
                                     {showPasswordSetup && (
                                         <div style={{ padding: '0 20px 20px 20px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '20px' }}>
-                                            <div className="input-group">
-                                                <label className="label-tiny">Set Unlock Password</label>
-                                                <div style={{ display: 'flex', gap: '12px' }}>
-                                                    <input type="password" className="settings-input" placeholder="New password" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
-                                                    <button className="btn-primary" onClick={handleSetPassword} disabled={!newPassword}>Enable</button>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                                <div className="input-group">
+                                                    <label className="label-tiny">Set Unlock Password</label>
+                                                    <input type="password" title="New password" placeholder="New password" value={newPassword} onChange={e => { setNewPassword(e.target.value); setPasswordError(''); }} className="settings-input" />
                                                 </div>
+                                                <div className="input-group">
+                                                    <label className="label-tiny">Confirm Password</label>
+                                                    <input type="password" title="Confirm password" placeholder="Confirm password" value={confirmPassword} onChange={e => { setConfirmPassword(e.target.value); setPasswordError(''); }} className="settings-input" />
+                                                </div>
+                                                <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', margin: '4px 0', paddingTop: '12px' }}>
+                                                    <div className="input-group">
+                                                        <label className="label-tiny">Secret Recovery Key</label>
+                                                        <input type="password" title="Recovery key" placeholder="Recovery key" value={newRecoveryKey} onChange={e => { setNewRecoveryKey(e.target.value); setPasswordError(''); }} className="settings-input" />
+                                                    </div>
+                                                    <div className="input-group">
+                                                        <label className="label-tiny">Confirm Recovery Key</label>
+                                                        <input type="password" title="Confirm recovery key" placeholder="Confirm recovery key" value={confirmRecoveryKey} onChange={e => { setConfirmRecoveryKey(e.target.value); setPasswordError(''); }} className="settings-input" />
+                                                    </div>
+                                                </div>
+                                                {passwordError && <div style={{ color: '#ef4444', fontSize: '11px' }}>{passwordError}</div>}
+                                                <button className="btn-primary" onClick={handleSetPassword} disabled={!newPassword || !confirmPassword || !newRecoveryKey || !confirmRecoveryKey}>Enable App Lock</button>
                                             </div>
+                                        </div>
+                                    )}
+
+                                    {localConfig.security.appLockEnabled && (
+                                        <div style={{ padding: '0 20px 20px 20px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '10px' }}>
+                                            <button
+                                                onClick={() => {
+                                                    setIsChangingPassword(!isChangingPassword);
+                                                    setNewRecoveryKey('');
+                                                    setConfirmRecoveryKey('');
+                                                }}
+                                                style={{ background: 'none', border: 'none', color: '#3b82f6', fontSize: '12px', cursor: 'pointer', padding: 0 }}
+                                            >
+                                                {isChangingPassword ? 'Cancel Change' : 'Change Password / Recovery Key'}
+                                            </button>
+
+                                            {isChangingPassword && (
+                                                <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                                    <div className="input-group">
+                                                        <label className="label-tiny">Old Password</label>
+                                                        <input type="password" title="Old password" placeholder="Old password" value={oldPassword} onChange={e => setOldPassword(e.target.value)} className="settings-input" />
+                                                    </div>
+                                                    <div className="input-group">
+                                                        <label className="label-tiny">New Password</label>
+                                                        <input type="password" title="New password" placeholder="New password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="settings-input" />
+                                                    </div>
+                                                    <div className="input-group">
+                                                        <label className="label-tiny">Confirm New Password</label>
+                                                        <input type="password" title="Confirm new password" placeholder="Confirm password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="settings-input" />
+                                                    </div>
+                                                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', margin: '4px 0', paddingTop: '12px' }}>
+                                                        <div className="input-group">
+                                                            <label className="label-tiny">Update Recovery Key (Optional)</label>
+                                                            <input type="password" title="New recovery key" placeholder="Leave empty to keep current" value={newRecoveryKey} onChange={e => setNewRecoveryKey(e.target.value)} className="settings-input" />
+                                                        </div>
+                                                        {newRecoveryKey && (
+                                                            <div className="input-group">
+                                                                <label className="label-tiny">Confirm Recovery Key</label>
+                                                                <input type="password" title="Confirm recovery key" placeholder="Confirm recovery key" value={confirmRecoveryKey} onChange={e => setConfirmRecoveryKey(e.target.value)} className="settings-input" />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    {passwordError && <div style={{ color: '#ef4444', fontSize: '11px' }}>{passwordError}</div>}
+                                                    <button className="btn-primary" onClick={handleChangePassword}>Update Security Settings</button>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>

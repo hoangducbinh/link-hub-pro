@@ -19,6 +19,7 @@ export interface Shortcut {
 export interface SecurityConfig {
     appLockEnabled: boolean
     passwordHash?: string
+    recoveryHash?: string
     autoLockTimer: number // in minutes, 0 to disable
 }
 

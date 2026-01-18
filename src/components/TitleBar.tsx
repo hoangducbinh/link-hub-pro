@@ -110,9 +110,13 @@ const TitleBar: React.FC<TitleBarProps> = ({
                 {isCurrentTabLockable && (
                     <button
                         className={`tool-btn ${isCurrentTabLocked ? 'active' : ''}`}
-                        onClick={onToggleLockTab}
-                        title={isCurrentTabLocked ? "Unlock Tab" : "Lock Tab Manually"}
-                        style={{ color: isCurrentTabLocked ? '#ef4444' : 'inherit' }}
+                        onClick={() => !isCurrentTabLocked && onToggleLockTab?.()}
+                        title={isCurrentTabLocked ? "Locked (Enter password to unlock)" : "Lock Tab Manually"}
+                        style={{
+                            color: isCurrentTabLocked ? '#ef4444' : 'inherit',
+                            cursor: isCurrentTabLocked ? 'default' : 'pointer',
+                            opacity: isCurrentTabLocked ? 0.8 : 1
+                        }}
                     >
                         {isCurrentTabLocked ? <Lock size={18} strokeWidth={1.5} /> : <Unlock size={18} strokeWidth={1.5} />}
                     </button>

@@ -99,8 +99,24 @@ ipcMain.handle('config:load-all', async () => {
   return configs
 })
 
-ipcMain.handle('config:save', async (_, { name, data }) => {
+ipcMain.handle('config:save', async (_, { name, data, action }) => {
   const filePath = path.join(CONFIG_DIR, name.endsWith('.json') ? name : `${name}.json`)
+
+  if (action === 'reset-security') {
+    if (fs.existsSync(filePath)) {
+      const content = fs.readFileSync(filePath, 'utf8')
+      const config = JSON.parse(content)
+      config.security = {
+        appLockEnabled: false,
+        autoLockTimer: 0,
+        passwordHash: undefined
+      }
+      fs.writeFileSync(filePath, JSON.stringify(config, null, 2), 'utf8')
+      return true
+    }
+    return false
+  }
+
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8')
   return true
 })

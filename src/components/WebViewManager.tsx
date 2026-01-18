@@ -17,10 +17,51 @@ interface WebViewManagerProps {
     layout: string
     activeIds: string[]
     passwordHash: string
+    recoveryHash?: string
+    isGlobalLocked: boolean
     onUnlockTab: (instanceId: string) => void
 }
 
-const WebViewManager: React.FC<WebViewManagerProps> = ({ webViews, layout, activeIds, passwordHash, onUnlockTab }) => {
+const WebViewManager: React.FC<WebViewManagerProps> = ({ webViews, layout, activeIds, passwordHash, recoveryHash, isGlobalLocked, onUnlockTab }) => {
+    const lockStatesRef = React.useRef<Record<string, boolean>>({})
+
+    React.useEffect(() => {
+        webViews.forEach(wv => {
+            const webview = document.getElementById(`webview-${wv.instanceId}`) as any
+            if (webview) {
+                const shouldLock = isGlobalLocked || wv.isLocked
+                const prevLockState = lockStatesRef.current[wv.instanceId]
+
+                if (shouldLock && !prevLockState) {
+                    // Transition: Unlocked -> Locked
+                    webview.setAudioMuted(true)
+                    // Attempt to pause media
+                    webview.executeJavaScript(`
+                        (function() {
+                            try {
+                                const media = document.querySelectorAll('video, audio');
+                                media.forEach(m => { if (!m.paused) m.pause(); });
+                                
+                                // YouTube player API
+                                const ytPlayer = document.getElementById('movie_player');
+                                if (ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
+                                
+                                // Generic buttons (Spotify etc)
+                                const pauseBtn = document.querySelector('[aria-label="Pause"], [data-testid="control-button-pause"]');
+                                if (pauseBtn) pauseBtn.click();
+                            } catch(e) {}
+                        })()
+                    `).catch(() => { })
+                } else if (!shouldLock && prevLockState) {
+                    // Transition: Locked -> Unlocked
+                    webview.setAudioMuted(false)
+                }
+
+                // Update ref
+                lockStatesRef.current[wv.instanceId] = !!shouldLock
+            }
+        })
+    }, [isGlobalLocked, webViews])
 
     const getStyleForWebView = (instanceId: string): React.CSSProperties => {
         const slotIndex = activeIds.indexOf(instanceId)
@@ -80,9 +121,10 @@ const WebViewManager: React.FC<WebViewManagerProps> = ({ webViews, layout, activ
                         }}
                     />
                     <AnimatePresence>
-                        {wv.isLocked && (
+                        {wv.isLocked && !isGlobalLocked && (
                             <AppLockOverlay
                                 hash={passwordHash}
+                                recoveryHash={recoveryHash || ''}
                                 onUnlock={() => onUnlockTab(wv.instanceId)}
                             />
                         )}
