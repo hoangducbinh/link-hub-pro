@@ -31,7 +31,6 @@ interface TitleBarProps {
     isCurrentTabLockable?: boolean
     isCurrentTabLocked?: boolean
     onToggleLockTab?: () => void
-    onFloatCurrentTab: () => void
 }
 
 const TitleBar: React.FC<TitleBarProps> = ({
@@ -48,8 +47,7 @@ const TitleBar: React.FC<TitleBarProps> = ({
     onNavigate,
     isCurrentTabLockable,
     isCurrentTabLocked,
-    onToggleLockTab,
-    onFloatCurrentTab
+    onToggleLockTab
 }) => {
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0
     const [inputValue, setInputValue] = React.useState(currentUrl)
@@ -200,7 +198,6 @@ const TitleBar: React.FC<TitleBarProps> = ({
                 anchorRect={layoutMenuRect}
                 currentLayout={currentLayout}
                 onSetLayout={onSetLayout}
-                onFloatCurrent={onFloatCurrentTab}
             />
 
             {
