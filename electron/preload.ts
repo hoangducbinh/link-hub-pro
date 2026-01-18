@@ -11,6 +11,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   minimize: () => ipcRenderer.send('window-minimize'),
   maximize: () => ipcRenderer.send('window-maximize'),
   close: () => ipcRenderer.send('window-close'),
+
+  // Config APIs
+  loadConfigs: () => ipcRenderer.invoke('config:load-all'),
+  saveConfig: (payload: { name: string, data: any }) => ipcRenderer.invoke('config:save', payload),
+  importConfig: () => ipcRenderer.invoke('config:import'),
+  exportConfig: (payload: { data: any, defaultName: string }) => ipcRenderer.invoke('config:export', payload),
+  pickIcon: () => ipcRenderer.invoke('config:pick-icon'),
 })
 
 // Keep raw ipcRenderer if the template uses it, but we prefer the explicit API above

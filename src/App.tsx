@@ -1,42 +1,80 @@
 import { useState, useEffect } from 'react'
-import Launcher, { AppIcon } from './components/Launcher'
+import Launcher from './components/Launcher'
 import WebViewManager, { WebViewInfo } from './components/WebViewManager'
 import TitleBar from './components/TitleBar'
 import MissionControl from './components/MissionControl'
+import SettingsModal from './components/SettingsModal'
+import SettingsMenu from './components/SettingsMenu'
 import './App.css'
 
 import { getFavicon } from './utils/favicon'
+import { AppConfig, WebsiteConfig } from './types/config'
 
-const DEFAULT_APPS: AppIcon[] = [
-  { id: 'google', name: 'Google', url: 'https://www.google.com/', icon: getFavicon('https://www.google.com/') },
-  { id: 'youtube', name: 'YouTube', url: 'https://www.youtube.com/?app=desktop&hl=vi', icon: getFavicon('https://www.youtube.com/') },
-  { id: 'github', name: 'GitHub', url: 'https://github.com/', icon: getFavicon('https://github.com/') },
-  { id: 'chatgpt', name: 'ChatGPT', url: 'https://chatgpt.com/', icon: getFavicon('https://chatgpt.com/') },
-  { id: 'gemini', name: 'Gemini', url: 'https://gemini.google.com/', icon: getFavicon('https://gemini.google.com/') },
-]
+const INITIAL_CONFIG: AppConfig = {
+  version: '1.0.0',
+  websites: [
+    { id: 'google', name: 'Google', url: 'https://www.google.com/', icon: getFavicon('https://www.google.com/'), sessionType: 'shared', group: 'General' },
+    { id: 'youtube', name: 'YouTube', url: 'https://www.youtube.com/?app=desktop&hl=vi', icon: getFavicon('https://www.youtube.com/'), sessionType: 'shared', group: 'Entertainment' },
+    { id: 'github', name: 'GitHub', url: 'https://github.com/', icon: getFavicon('https://github.com/'), sessionType: 'shared', group: 'Dev' },
+    { id: 'chatgpt', name: 'ChatGPT', url: 'https://chatgpt.com/', icon: getFavicon('https://chatgpt.com/'), sessionType: 'shared', group: 'AI' },
+    { id: 'gemini', name: 'Gemini', url: 'https://gemini.google.com/', icon: getFavicon('https://gemini.google.com/'), sessionType: 'shared', group: 'AI' },
+  ],
+  settings: {
+    theme: 'dark',
+    defaultLayout: 'single'
+  }
+}
 
 function App() {
+  const [config, setConfig] = useState<AppConfig>(INITIAL_CONFIG)
   const [isLauncherOpen, setIsLauncherOpen] = useState(false)
   const [isMissionControlOpen, setIsMissionControlOpen] = useState(false)
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
+  const [settingsMenuRect, setSettingsMenuRect] = useState<DOMRect | null>(null)
   const [layout, setLayout] = useState('single')
 
-  // Initialize with Google by default
-  const [activeWebViews, setActiveWebViews] = useState<WebViewInfo[]>(() => {
-    const googleApp = DEFAULT_APPS[0]
-    return [{
-      instanceId: `inst-${googleApp.id}-default`,
-      appId: googleApp.id,
-      url: googleApp.url,
-      name: googleApp.name,
-      icon: googleApp.icon,
-      partition: 'persist:main'
-    }]
-  })
-  const [activeIds, setActiveIds] = useState<string[]>(() => [`inst-${DEFAULT_APPS[0].id}-default`])
+  // Initialize with the first app from config
+  const [activeWebViews, setActiveWebViews] = useState<WebViewInfo[]>([])
+  const [activeIds, setActiveIds] = useState<string[]>([])
   const [currentUrl, setCurrentUrl] = useState('')
   const [screenshots, setScreenshots] = useState<Record<string, string>>({})
-
   const [isLoading, setIsLoading] = useState(false)
+
+  // Load configuration on mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const configs = await (window as any).electronAPI.loadConfigs()
+        if (configs && configs.length > 0) {
+          // Use the first one (usually default.json)
+          setConfig(configs[0].data)
+        } else {
+          // Save initial config if none exists
+          await (window as any).electronAPI.saveConfig({ name: 'default.json', data: INITIAL_CONFIG })
+        }
+      } catch (e) {
+        console.error('Failed to load configs:', e)
+      }
+    }
+    loadData()
+  }, [])
+
+  // Setup initial webview after config is loaded
+  useEffect(() => {
+    if (activeWebViews.length === 0 && config.websites.length > 0) {
+      const firstApp = config.websites[0]
+      const defaultId = `inst-${firstApp.id}-default`
+      setActiveWebViews([{
+        instanceId: defaultId,
+        appId: firstApp.id,
+        url: firstApp.url,
+        name: firstApp.name,
+        icon: firstApp.icon,
+        partition: firstApp.sessionType === 'isolated' ? `persist:${firstApp.id}` : 'persist:main'
+      }])
+      setActiveIds([defaultId])
+    }
+  }, [config.websites])
 
   // Sync URL from primary active webview
   useEffect(() => {
@@ -58,7 +96,6 @@ function App() {
         const newUrl = webviewEl.getURL()
         const newIcon = getFavicon(newUrl)
         setCurrentUrl(newUrl)
-        // Update URL and Icon in our state list
         setActiveWebViews(prev => prev.map(w =>
           w.instanceId === activeId ? { ...w, url: newUrl, icon: newIcon } : w
         ))
@@ -68,20 +105,11 @@ function App() {
     const handleStartLoading = () => setIsLoading(true)
     const handleStopLoading = () => setIsLoading(false)
 
-    // Initial check
-    // Initial check - wrap in timeout to ensure webview is ready
     setTimeout(() => {
       try {
-        if (webviewEl.isLoading?.()) {
-          setIsLoading(true)
-        } else {
-          setIsLoading(false)
-        }
-      } catch (e) {
-        // Ignore errors if webview is not ready
-      }
+        setIsLoading(webviewEl.isLoading?.() || false)
+      } catch (e) { }
     }, 100)
-
 
     webviewEl.addEventListener('did-navigate', updateUrl)
     webviewEl.addEventListener('did-navigate-in-page', updateUrl)
@@ -94,12 +122,11 @@ function App() {
       webviewEl.removeEventListener('did-start-loading', handleStartLoading)
       webviewEl.removeEventListener('did-stop-loading', handleStopLoading)
     }
-  }, [activeIds[0], activeWebViews.length]) // Re-run when primary shift or lists changes
+  }, [activeIds[0], activeWebViews.length])
 
   const handleNavigate = (url: string) => {
     const activeId = activeIds[0]
     if (!activeId) return
-
     const webviewEl = document.getElementById(`webview-${activeId}`) as any
     if (webviewEl && !webviewEl.isDestroyed?.()) {
       webviewEl.loadURL(url)
@@ -107,8 +134,8 @@ function App() {
   }
 
   useEffect(() => {
-    const removeListener = window.electronAPI.onToggleLauncher(() => {
-      setIsLauncherOpen((prev) => !prev)
+    const removeListener = (window as any).electronAPI.onToggleLauncher(() => {
+      setIsLauncherOpen((prev: boolean) => !prev)
       setIsMissionControlOpen(false)
     })
     return () => removeListener()
@@ -120,56 +147,48 @@ function App() {
     }
   }, [activeWebViews.length, isMissionControlOpen])
 
-  // Auto-restore Google if all tabs are closed
+  // Auto-restore if all tabs are closed
   useEffect(() => {
-    if (activeWebViews.length === 0) {
-      const googleApp = DEFAULT_APPS[0]
-      const defaultId = `inst-${googleApp.id}-restore-${Date.now()}`
+    if (activeWebViews.length === 0 && config.websites.length > 0) {
+      const firstApp = config.websites[0]
+      const defaultId = `inst-${firstApp.id}-restore-${Date.now()}`
       setActiveWebViews([{
         instanceId: defaultId,
-        appId: googleApp.id,
-        url: googleApp.url,
-        name: googleApp.name,
-        partition: 'persist:main'
+        appId: firstApp.id,
+        url: firstApp.url,
+        name: firstApp.name,
+        partition: firstApp.sessionType === 'isolated' ? `persist:${firstApp.id}` : 'persist:main'
       }])
       setActiveIds([defaultId])
-      setIsMissionControlOpen(false) // meaningful change: ensure we exit mission control
+      setIsMissionControlOpen(false)
     }
   }, [activeWebViews.length])
 
-  const handleSelectApp = (app: AppIcon, forceNewInstance = false) => {
+  const handleSelectApp = (app: any, forceNewInstance = false) => {
     setIsLauncherOpen(false)
     setIsMissionControlOpen(false)
 
     let instanceToFocus: WebViewInfo | undefined
-
     if (!forceNewInstance) {
-      // Find existing instance for this app
       instanceToFocus = activeWebViews.find((wv) => wv.appId === app.id)
     }
 
     if (!instanceToFocus) {
-      // Create new instance
       const newInstance: WebViewInfo = {
         instanceId: `inst-${app.id}-${Date.now()}`,
         appId: app.id,
         url: app.url,
         name: app.name,
-        partition: 'persist:main' // Default partition
+        partition: (app as WebsiteConfig).sessionType === 'isolated' ? `persist:${app.id}` : 'persist:main'
       }
-
-      // Capture current before switching?
       if (activeIds.length > 0) {
         activeIds.forEach(id => captureSnapshot(id))
       }
-
       setActiveWebViews((prev) => [...prev, newInstance])
       instanceToFocus = newInstance
     }
 
     const instanceId = instanceToFocus.instanceId
-
-    // Assign to a slot
     setActiveIds((prev) => {
       if (layout === 'single') return [instanceId]
       if (prev.includes(instanceId)) return prev
@@ -200,62 +219,51 @@ function App() {
   const handleBrowserAction = (type: string) => {
     const activeInstanceId = activeIds[0]
     if (!activeInstanceId) return
-
     const wv = document.getElementById(`webview-${activeInstanceId}`) as any
     if (!wv || wv.tagName !== 'WEBVIEW' || wv.isDestroyed?.()) return
-
     try {
       if (type === 'back' && wv.canGoBack()) wv.goBack()
       if (type === 'forward' && wv.canGoForward()) wv.goForward()
       if (type === 'reload') wv.reload()
-    } catch (e) {
-      console.warn('Browser action failed:', e)
-    }
+    } catch (e) { }
   }
 
   const captureSnapshot = async (instanceId: string) => {
     const webviewEl = document.getElementById(`webview-${instanceId}`) as any
-    if (!webviewEl || webviewEl.tagName !== 'WEBVIEW' || webviewEl.isDestroyed?.() || webviewEl.isLoading?.()) {
-      return
-    }
-
+    if (!webviewEl || webviewEl.tagName !== 'WEBVIEW' || webviewEl.isDestroyed?.() || webviewEl.isLoading?.()) return
     try {
       const image = await webviewEl.capturePage()
-      const resized = image.resize({ width: 400 })
-      const dataUrl = resized.toDataURL()
-
-      setScreenshots(prev => {
-        if (prev[instanceId] === dataUrl) return prev
-        return { ...prev, [instanceId]: dataUrl }
-      })
-    } catch (e) {
-      console.warn('Manual snapshot failed:', e)
-    }
+      const dataUrl = image.resize({ width: 400 }).toDataURL()
+      setScreenshots(prev => ({ ...prev, [instanceId]: dataUrl }))
+    } catch (e) { }
   }
 
-  // Proactive snapshot capture for visible webviews
   useEffect(() => {
     const timer = setInterval(() => {
       if (isMissionControlOpen || activeIds.length === 0) return
-      // Capture only the active one periodically
       activeIds.forEach(id => captureSnapshot(id))
-    }, 3000) // 3s interval
-
+    }, 5000)
     return () => clearInterval(timer)
   }, [activeIds, isMissionControlOpen])
 
-  const handleToggleMissionControl = () => {
-    // If opening, capture current state first
-    if (!isMissionControlOpen && activeIds.length > 0) {
-      activeIds.forEach(id => captureSnapshot(id))
+  const handleSaveConfig = async (newConfig: AppConfig) => {
+    setConfig(newConfig)
+    await (window as any).electronAPI.saveConfig({ name: 'default.json', data: newConfig })
+  }
+
+  const handleImportConfig = async () => {
+    const result = await (window as any).electronAPI.importConfig()
+    if (result) {
+      setConfig(result.data)
     }
-    setIsMissionControlOpen(!isMissionControlOpen)
-    setIsLauncherOpen(false)
+  }
+
+  const handleExportConfig = async () => {
+    await (window as any).electronAPI.exportConfig({ data: config, defaultName: 'linkhub-config.json' })
   }
 
   return (
-    <div className="app-container">
-      {/* System Loading Bar */}
+    <div className={`app-container theme-${config.settings.theme}`}>
       {isLoading && (
         <div className="loading-bar-container">
           <div className="loading-bar-progress" />
@@ -270,8 +278,9 @@ function App() {
           setIsLauncherOpen(!isLauncherOpen)
           setIsMissionControlOpen(false)
         }}
-        onToggleMissionControl={handleToggleMissionControl}
+        onToggleMissionControl={() => setIsMissionControlOpen(!isMissionControlOpen)}
         onSetLayout={(l: string) => setLayout(l)}
+        onOpenSettingsMenu={(rect) => setSettingsMenuRect(rect)}
         currentLayout={layout}
         currentUrl={currentUrl}
         onNavigate={handleNavigate}
@@ -288,7 +297,7 @@ function App() {
           isOpen={isLauncherOpen}
           onClose={() => setIsLauncherOpen(false)}
           onSelect={handleSelectApp}
-          apps={DEFAULT_APPS}
+          apps={config.websites}
         />
 
         <MissionControl
@@ -300,8 +309,26 @@ function App() {
           onCloseWebView={handleCloseWebView}
         />
 
+        <SettingsModal
+          isOpen={isSettingsModalOpen}
+          onClose={() => setIsSettingsModalOpen(false)}
+          config={config}
+          onSave={handleSaveConfig}
+          onImport={handleImportConfig}
+          onExport={handleExportConfig}
+        />
+
+        <SettingsMenu
+          isOpen={!!settingsMenuRect}
+          onClose={() => setSettingsMenuRect(null)}
+          anchorRect={settingsMenuRect}
+          onOpenConfig={() => setIsSettingsModalOpen(true)}
+          onImport={handleImportConfig}
+          onExport={handleExportConfig}
+        />
+
         {!isLauncherOpen && !isMissionControlOpen && activeWebViews.length === 0 && (
-          <div style={{ position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)', opacity: 0.3, fontSize: '12px' }}>
+          <div className="placeholder-text">
             Press Cmd + O to open Launcher
           </div>
         )}

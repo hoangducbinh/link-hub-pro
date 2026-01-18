@@ -10,7 +10,8 @@ import {
     Rows,
     Maximize2,
     Square,
-    Layout
+    Layout,
+    Settings
 } from 'lucide-react'
 
 interface TitleBarProps {
@@ -20,6 +21,7 @@ interface TitleBarProps {
     onToggleLauncher: () => void
     onToggleMissionControl: () => void
     onSetLayout: (layout: string) => void
+    onOpenSettingsMenu: (rect: DOMRect) => void
     currentLayout: string
     currentUrl: string
     onNavigate: (url: string) => void
@@ -32,6 +34,7 @@ const TitleBar: React.FC<TitleBarProps> = ({
     onToggleLauncher,
     onToggleMissionControl,
     onSetLayout,
+    onOpenSettingsMenu,
     currentLayout,
     currentUrl,
     onNavigate,
@@ -60,6 +63,11 @@ const TitleBar: React.FC<TitleBarProps> = ({
             // Blur the input after navigation
             ; (e.target as HTMLInputElement).blur()
         }
+    }
+
+    const handleOpenSettings = (e: React.MouseEvent<HTMLButtonElement>) => {
+        const rect = e.currentTarget.getBoundingClientRect()
+        onOpenSettingsMenu(rect)
     }
 
     return (
@@ -122,7 +130,7 @@ const TitleBar: React.FC<TitleBarProps> = ({
                 </button>
             </div>
 
-            <div className="layout-group no-drag" style={{ display: 'flex', gap: '4px', borderLeft: '1px solid var(--border-color)', paddingLeft: '8px' }}>
+            <div className="layout-group no-drag" style={{ display: 'flex', gap: '4px', borderLeft: '1px solid var(--border-color)', paddingLeft: '8px', paddingRight: '8px' }}>
                 <button
                     className={`tool-btn ${currentLayout === 'single' ? 'active' : ''}`}
                     onClick={() => onSetLayout('single')}
@@ -143,6 +151,16 @@ const TitleBar: React.FC<TitleBarProps> = ({
                     title="Split Vertical"
                 >
                     <Rows size={15} strokeWidth={1.5} />
+                </button>
+
+                <div style={{ width: '1px', height: '18px', backgroundColor: 'var(--border-color)', margin: 'auto 4px' }} />
+
+                <button
+                    className="tool-btn"
+                    onClick={handleOpenSettings}
+                    title="Settings"
+                >
+                    <Settings size={18} strokeWidth={1.5} />
                 </button>
             </div>
 
