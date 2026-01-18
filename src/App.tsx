@@ -6,11 +6,11 @@ import MissionControl from './components/MissionControl'
 import './App.css'
 
 const DEFAULT_APPS: AppIcon[] = [
-  { id: 'google', name: 'Google', url: 'https://www.google.com' },
-  { id: 'youtube', name: 'YouTube', url: 'https://www.youtube.com' },
-  { id: 'github', name: 'GitHub', url: 'https://github.com' },
-  { id: 'chatgpt', name: 'ChatGPT', url: 'https://chatgpt.com' },
-  { id: 'gemini', name: 'Gemini', url: 'https://gemini.google.com' },
+  { id: 'google', name: 'Google', url: 'https://www.google.com/' },
+  { id: 'youtube', name: 'YouTube', url: 'https://www.youtube.com/?app=desktop&hl=vi' },
+  { id: 'github', name: 'GitHub', url: 'https://github.com/' },
+  { id: 'chatgpt', name: 'ChatGPT', url: 'https://chatgpt.com/' },
+  { id: 'gemini', name: 'Gemini', url: 'https://gemini.google.com/' },
 ]
 
 function App() {
@@ -31,7 +31,7 @@ function App() {
   })
   const [activeIds, setActiveIds] = useState<string[]>(() => [`inst-${DEFAULT_APPS[0].id}-default`])
   const [currentUrl, setCurrentUrl] = useState('')
-  const [activeTools, setActiveTools] = useState<Record<string, string[]>>({}) // instanceId -> toolIds
+  const [screenshots, setScreenshots] = useState<Record<string, string>>({})
 
   // Sync URL from primary active webview
   useEffect(() => {
@@ -77,25 +77,6 @@ function App() {
     }
   }
 
-  const handleToggleTool = (toolId: string) => {
-    const activeId = activeIds[0]
-    if (!activeId) return
-
-    setActiveTools(prev => {
-      const currentTools = prev[activeId] || []
-      const isToolActive = currentTools.includes(toolId)
-
-      const updatedTools = isToolActive
-        ? currentTools.filter(id => id !== toolId)
-        : [...currentTools, toolId]
-
-      return {
-        ...prev,
-        [activeId]: updatedTools
-      }
-    })
-  }
-
   useEffect(() => {
     const removeListener = window.electronAPI.onToggleLauncher(() => {
       setIsLauncherOpen((prev) => !prev)
@@ -123,6 +104,7 @@ function App() {
         partition: 'persist:main'
       }])
       setActiveIds([defaultId])
+      setIsMissionControlOpen(false) // meaningful change: ensure we exit mission control
     }
   }, [activeWebViews.length])
 
@@ -146,6 +128,12 @@ function App() {
         name: app.name,
         partition: 'persist:main' // Default partition
       }
+
+      // Capture current before switching?
+      if (activeIds.length > 0) {
+        activeIds.forEach(id => captureSnapshot(id))
+      }
+
       setActiveWebViews((prev) => [...prev, newInstance])
       instanceToFocus = newInstance
     }
@@ -173,6 +161,11 @@ function App() {
   const handleCloseWebView = (instanceId: string) => {
     setActiveWebViews((prev) => prev.filter((wv) => wv.instanceId !== instanceId))
     setActiveIds((prev) => prev.filter((id) => id !== instanceId))
+    setScreenshots((prev) => {
+      const newState = { ...prev }
+      delete newState[instanceId]
+      return newState
+    })
   }
 
   const handleBrowserAction = (type: string) => {
@@ -191,51 +184,42 @@ function App() {
     }
   }
 
+  const captureSnapshot = async (instanceId: string) => {
+    const webviewEl = document.getElementById(`webview-${instanceId}`) as any
+    if (!webviewEl || webviewEl.tagName !== 'WEBVIEW' || webviewEl.isDestroyed?.() || webviewEl.isLoading?.()) {
+      return
+    }
+
+    try {
+      const image = await webviewEl.capturePage()
+      const resized = image.resize({ width: 400 })
+      const dataUrl = resized.toDataURL()
+
+      setScreenshots(prev => {
+        if (prev[instanceId] === dataUrl) return prev
+        return { ...prev, [instanceId]: dataUrl }
+      })
+    } catch (e) {
+      console.warn('Manual snapshot failed:', e)
+    }
+  }
+
   // Proactive snapshot capture for visible webviews
   useEffect(() => {
-    const timer = setInterval(async () => {
+    const timer = setInterval(() => {
       if (isMissionControlOpen || activeIds.length === 0) return
-
-      const updatedWebViews = [...activeWebViews]
-
-      for (let i = 0; i < updatedWebViews.length; i++) {
-        const wv = updatedWebViews[i]
-        // Only refresh visible ones or those without a snapshot
-        if (activeIds.includes(wv.instanceId) || !wv.screenshot) {
-          const webviewEl = document.getElementById(`webview-${wv.instanceId}`) as any
-          if (webviewEl && webviewEl.tagName === 'WEBVIEW') {
-            try {
-              // Vital checks for sequential stability
-              if (webviewEl.isDestroyed?.() || webviewEl.isLoading?.()) {
-                continue
-              }
-
-              const image = await webviewEl.capturePage()
-              updatedWebViews[i] = { ...wv, screenshot: image.toDataURL() }
-
-              // Small yield to main thread to prevent UI lock and race conditions
-              await new Promise(r => setTimeout(r, 50))
-            } catch (e: any) {
-              // Ignore common disposed race condition
-              if (!e.message?.includes('disposed')) {
-                console.warn(`Snapshot capture failed for ${wv.instanceId}:`, e.message)
-              }
-            }
-          }
-        }
-      }
-
-      // Only update if there's an actual change 
-      setActiveWebViews((prev) => {
-        const hasChanged = JSON.stringify(prev) !== JSON.stringify(updatedWebViews)
-        return hasChanged ? updatedWebViews : prev
-      })
-    }, 5000)
+      // Capture only the active one periodically
+      activeIds.forEach(id => captureSnapshot(id))
+    }, 3000) // 3s interval
 
     return () => clearInterval(timer)
-  }, [activeIds, activeWebViews, isMissionControlOpen])
+  }, [activeIds, isMissionControlOpen])
 
   const handleToggleMissionControl = () => {
+    // If opening, capture current state first
+    if (!isMissionControlOpen && activeIds.length > 0) {
+      activeIds.forEach(id => captureSnapshot(id))
+    }
     setIsMissionControlOpen(!isMissionControlOpen)
     setIsLauncherOpen(false)
   }
@@ -255,8 +239,6 @@ function App() {
         currentLayout={layout}
         currentUrl={currentUrl}
         onNavigate={handleNavigate}
-        activeToolIds={activeTools[activeIds[0]] || []}
-        onToggleTool={handleToggleTool}
       />
 
       <div className="main-content">
@@ -264,7 +246,6 @@ function App() {
           webViews={activeWebViews}
           layout={layout}
           activeIds={activeIds}
-          activeTools={activeTools}
         />
 
         <Launcher
@@ -278,6 +259,7 @@ function App() {
           isOpen={isMissionControlOpen}
           onClose={() => setIsMissionControlOpen(false)}
           webViews={activeWebViews}
+          screenshots={screenshots}
           onSelect={handleSelectFromMissionControl}
           onCloseWebView={handleCloseWebView}
         />

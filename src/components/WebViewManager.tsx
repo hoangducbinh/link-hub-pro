@@ -1,23 +1,20 @@
 import React from 'react'
-import ToolOverlay from './ToolOverlay'
 
 export interface WebViewInfo {
     instanceId: string
     appId: string
     url: string
     name: string
-    screenshot?: string
     partition?: string
 }
 
 interface WebViewManagerProps {
     webViews: WebViewInfo[]
     layout: string
-    activeIds: string[] // instanceIds
-    activeTools: Record<string, string[]> // instanceId -> active tool IDs
+    activeIds: string[]
 }
 
-const WebViewManager: React.FC<WebViewManagerProps> = ({ webViews, layout, activeIds, activeTools }) => {
+const WebViewManager: React.FC<WebViewManagerProps> = ({ webViews, layout, activeIds }) => {
 
     const getStyleForWebView = (instanceId: string): React.CSSProperties => {
         const slotIndex = activeIds.indexOf(instanceId)
@@ -68,17 +65,13 @@ const WebViewManager: React.FC<WebViewManagerProps> = ({ webViews, layout, activ
                         partition={wv.partition || 'persist:main'}
                         allowpopups="true"
                         style={{
-                            position: 'absolute', // Make it absolute
+                            position: 'absolute',
                             top: 0,
                             left: 0,
                             width: '100%',
                             height: '100%',
                             border: 'none',
                         }}
-                    />
-                    <ToolOverlay
-                        webviewId={wv.instanceId}
-                        activeToolIds={activeTools[wv.instanceId] || []}
                     />
                 </div>
             ))}

@@ -12,7 +12,6 @@ import {
     Square,
     Layout
 } from 'lucide-react'
-import ToolMenu from './ToolMenu'
 
 interface TitleBarProps {
     onBack: () => void
@@ -24,8 +23,6 @@ interface TitleBarProps {
     currentLayout: string
     currentUrl: string
     onNavigate: (url: string) => void
-    activeToolIds: string[]
-    onToggleTool: (toolId: string) => void
 }
 
 const TitleBar: React.FC<TitleBarProps> = ({
@@ -38,8 +35,6 @@ const TitleBar: React.FC<TitleBarProps> = ({
     currentLayout,
     currentUrl,
     onNavigate,
-    activeToolIds,
-    onToggleTool,
 }) => {
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0
     const [inputValue, setInputValue] = React.useState(currentUrl)
@@ -117,11 +112,6 @@ const TitleBar: React.FC<TitleBarProps> = ({
                         className="address-bar-input"
                     />
                 </div>
-
-                <ToolMenu
-                    activeToolIds={activeToolIds}
-                    onToggleTool={onToggleTool}
-                />
 
                 <button
                     className="tool-btn"

@@ -1,32 +1,18 @@
-import { app, BrowserWindow, globalShortcut, ipcMain, session } from 'electron'
+import { app, BrowserWindow, globalShortcut, ipcMain } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
-import { ElectronBlocker } from '@cliqz/adblocker-electron'
-import fetch from 'cross-fetch'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-// The built directory structure
-//
-// ├─┬─┬ dist
-// │ │ └── index.html
-// │ │
-// │ ├─┬ dist-electron
-// │ │ ├── main.js
-// │ │ └── preload.mjs
-// │
 process.env.APP_ROOT = path.join(__dirname, '..')
 
-// 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
 const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
 const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
 
-// Handle "Render frame was disposed" race condition globally
 process.on('uncaughtException', (error) => {
   if (error.message?.includes('Render frame was disposed')) {
-    // Ignore this common Electron race condition
     return;
   }
   console.error('Uncaught Exception:', error);
@@ -143,36 +129,15 @@ app.on('window-all-closed', () => {
 })
 
 app.on('activate', () => {
-  // On OS X it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow()
   }
 })
 
 app.on('will-quit', () => {
-  // Unregister all shortcuts.
   globalShortcut.unregisterAll()
 })
 
-async function setupAdBlocker() {
-  try {
-    const blocker = await ElectronBlocker.fromPrebuiltAdsAndTracking(fetch)
-
-    // Apply to default session
-    blocker.enableBlockingInSession(session.defaultSession)
-
-    // Apply to our specific partition used by webviews
-    const mainSession = session.fromPartition('persist:main')
-    blocker.enableBlockingInSession(mainSession)
-
-    console.log('Ad-blocker initialized for default and persist:main sessions')
-  } catch (error) {
-    console.error('Failed to initialize ad-blocker:', error)
-  }
-}
-
 app.whenReady().then(() => {
-  setupAdBlocker()
   createWindow()
 })
