@@ -28,6 +28,13 @@ const MissionControl: React.FC<MissionControlProps> = ({
     if (count > 9) cols = 4
     if (count > 16) cols = 5
 
+    // Adjust container max-width based on count to prevent huge cards
+    let containerMaxWidth = '1200px'
+    if (count === 1) containerMaxWidth = '400px'
+    if (count === 2) containerMaxWidth = '800px'
+    if (count === 3) containerMaxWidth = '800px'
+    if (count === 4) containerMaxWidth = '800px'
+
     // Calculate item height based exclusively on available vertical space
     // We roughly estimate header + margins takes ~150px
     // But we want it to fit in "70vh" or similar.
@@ -71,9 +78,9 @@ const MissionControl: React.FC<MissionControlProps> = ({
                             style={{
                                 display: 'grid',
                                 gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
-                                gap: '20px',
-                                width: '90%',
-                                maxWidth: '1400px',
+                                gap: '24px',
+                                width: '100%',
+                                maxWidth: containerMaxWidth,
                                 maxHeight: '80vh',
                                 padding: '20px',
                                 pointerEvents: 'auto',
@@ -82,117 +89,122 @@ const MissionControl: React.FC<MissionControlProps> = ({
                                 justifyItems: 'center',
                             }}
                         >
-                            {webViews.length === 0 ? (
-                                <div style={{ gridColumn: '1/-1', textAlign: 'center', color: 'rgba(255,255,255,0.3)', padding: '40px' }}>
-                                    No active pages
-                                </div>
-                            ) : (
-                                webViews.map((wv) => (
-                                    <motion.div
-                                        key={wv.instanceId}
-                                        layoutId={wv.instanceId}
-                                        whileHover={{
-                                            scale: 1.05,
-                                            zIndex: 10,
-                                            boxShadow: '0 0 0 2px rgba(59, 130, 246, 0.8), 0 20px 40px rgba(0,0,0,0.4)', // Blue border glow + shadow
-                                        }}
-                                        onClick={(e) => {
-                                            e.stopPropagation()
-                                            onSelect(wv.instanceId)
-                                        }}
-                                        onContextMenu={(e) => {
-                                            e.preventDefault()
-                                            e.stopPropagation()
-                                            onCloseWebView(wv.instanceId)
-                                        }}
-                                        style={{
-                                            backgroundColor: 'rgba(30, 30, 30, 0.4)',
-                                            borderRadius: '12px',
-                                            cursor: 'pointer',
-                                            border: '1px solid rgba(255, 255, 255, 0.1)',
-                                            position: 'relative',
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            backdropFilter: 'blur(30px)',
-                                            boxShadow: '0 4px 24px rgba(0,0,0,0.1)',
-                                            overflow: 'hidden',
-                                            width: '100%',
-                                            aspectRatio: '16/10',
-                                        }}
-                                    >
-                                        {/* Header */}
-                                        <div style={{
-                                            padding: '10px 14px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '10px',
-                                            borderBottom: '1px solid rgba(255,255,255,0.03)',
-                                            backgroundColor: 'rgba(255,255,255,0.02)'
-                                        }}>
+                            <AnimatePresence mode='popLayout'>
+                                {webViews.length === 0 ? (
+                                    <div style={{ gridColumn: '1/-1', textAlign: 'center', color: 'rgba(255,255,255,0.3)', padding: '40px' }}>
+                                        No active pages
+                                    </div>
+                                ) : (
+                                    webViews.map((wv) => (
+                                        <motion.div
+                                            key={wv.instanceId}
+                                            layout
+                                            initial={{ opacity: 0, scale: 0.8 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
+                                            whileHover={{
+                                                scale: 1.03,
+                                                zIndex: 10,
+                                                boxShadow: '0 0 0 2px rgba(59, 130, 246, 0.8), 0 20px 40px rgba(0,0,0,0.4)', // Blue border glow + shadow
+                                            }}
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                onSelect(wv.instanceId)
+                                            }}
+                                            onContextMenu={(e) => {
+                                                e.preventDefault()
+                                                e.stopPropagation()
+                                                onCloseWebView(wv.instanceId)
+                                            }}
+                                            style={{
+                                                backgroundColor: 'rgba(30, 30, 30, 0.4)',
+                                                borderRadius: '12px',
+                                                cursor: 'pointer',
+                                                border: '1px solid rgba(255, 255, 255, 0.1)',
+                                                position: 'relative',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                backdropFilter: 'blur(30px)',
+                                                boxShadow: '0 4px 24px rgba(0,0,0,0.1)',
+                                                overflow: 'hidden',
+                                                width: '100%',
+                                                aspectRatio: '16/10',
+                                            }}
+                                        >
+                                            {/* Header */}
                                             <div style={{
-                                                width: '20px',
-                                                height: '20px',
-                                                borderRadius: '5px',
-                                                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                                                padding: '10px 14px',
                                                 display: 'flex',
                                                 alignItems: 'center',
-                                                justifyContent: 'center',
-                                                flexShrink: 0
+                                                gap: '10px',
+                                                borderBottom: '1px solid rgba(255,255,255,0.03)',
+                                                backgroundColor: 'rgba(255,255,255,0.02)'
                                             }}>
-                                                <Globe size={12} color="rgba(255,255,255,0.8)" />
-                                            </div>
-                                            <div style={{ flex: 1, overflow: 'hidden' }}>
                                                 <div style={{
-                                                    fontSize: '12px',
-                                                    fontWeight: 500,
-                                                    color: 'rgba(255,255,255,0.9)',
-                                                    whiteSpace: 'nowrap',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis'
-                                                }}>
-                                                    {wv.name}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Preview Area */}
-                                        <div style={{
-                                            flex: 1,
-                                            backgroundColor: '#000',
-                                            position: 'relative',
-                                            overflow: 'hidden'
-                                        }}>
-                                            {screenshots[wv.instanceId] ? (
-                                                <img
-                                                    src={screenshots[wv.instanceId]}
-                                                    style={{
-                                                        width: '100%',
-                                                        height: '100%',
-                                                        objectFit: 'cover',
-                                                        objectPosition: 'top left',
-                                                        opacity: 0.9
-                                                    }}
-                                                    alt="Preview"
-                                                />
-                                            ) : (
-                                                <div style={{
-                                                    width: '100%',
-                                                    height: '100%',
+                                                    width: '20px',
+                                                    height: '20px',
+                                                    borderRadius: '5px',
+                                                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
                                                     display: 'flex',
-                                                    flexDirection: 'column',
                                                     alignItems: 'center',
                                                     justifyContent: 'center',
-                                                    gap: '12px',
-                                                    backgroundColor: 'rgba(255,255,255,0.02)'
+                                                    flexShrink: 0
                                                 }}>
-                                                    <Globe size={32} color="rgba(255,255,255,0.1)" />
+                                                    <Globe size={12} color="rgba(255,255,255,0.8)" />
                                                 </div>
-                                            )}
-                                        </div>
-                                    </motion.div>
+                                                <div style={{ flex: 1, overflow: 'hidden' }}>
+                                                    <div style={{
+                                                        fontSize: '12px',
+                                                        fontWeight: 500,
+                                                        color: 'rgba(255,255,255,0.9)',
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis'
+                                                    }}>
+                                                        {wv.name}
+                                                    </div>
+                                                </div>
+                                            </div>
 
-                                ))
-                            )}
+                                            {/* Preview Area */}
+                                            <div style={{
+                                                flex: 1,
+                                                backgroundColor: '#000',
+                                                position: 'relative',
+                                                overflow: 'hidden'
+                                            }}>
+                                                {screenshots[wv.instanceId] ? (
+                                                    <img
+                                                        src={screenshots[wv.instanceId]}
+                                                        style={{
+                                                            width: '100%',
+                                                            height: '100%',
+                                                            objectFit: 'cover',
+                                                            objectPosition: 'top left',
+                                                            opacity: 0.9
+                                                        }}
+                                                        alt="Preview"
+                                                    />
+                                                ) : (
+                                                    <div style={{
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        gap: '12px',
+                                                        backgroundColor: 'rgba(255,255,255,0.02)'
+                                                    }}>
+                                                        <Globe size={32} color="rgba(255,255,255,0.1)" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </motion.div>
+
+                                    ))
+                                )}
+                            </AnimatePresence>
                         </div>
 
                         <button

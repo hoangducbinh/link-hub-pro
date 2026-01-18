@@ -165,9 +165,6 @@ const Launcher: React.FC<LauncherProps> = ({ isOpen, onClose, onSelect, apps }) 
                                     <span style={{ fontSize: '14px', fontWeight: 500 }}>
                                         {app.name}
                                     </span>
-                                    <span style={{ fontSize: '10px', opacity: 0.4, marginTop: '4px' }}>
-                                        Right-click for new
-                                    </span>
                                 </motion.div>
                             ))}
                         </div>
