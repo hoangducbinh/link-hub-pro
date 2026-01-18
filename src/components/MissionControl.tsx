@@ -20,7 +20,6 @@ const MissionControl: React.FC<MissionControlProps> = ({
     onSelect,
     onCloseWebView
 }) => {
-    // Dynamic grid calculation
     const count = webViews.length
     let cols = 1
     if (count > 1) cols = 2
@@ -28,17 +27,11 @@ const MissionControl: React.FC<MissionControlProps> = ({
     if (count > 9) cols = 4
     if (count > 16) cols = 5
 
-    // Adjust container max-width based on count to prevent huge cards
     let containerMaxWidth = '1200px'
     if (count === 1) containerMaxWidth = '400px'
     if (count === 2) containerMaxWidth = '800px'
     if (count === 3) containerMaxWidth = '800px'
     if (count === 4) containerMaxWidth = '800px'
-
-    // Calculate item height based exclusively on available vertical space
-    // We roughly estimate header + margins takes ~150px
-    // But we want it to fit in "70vh" or similar.
-    // If we have many items, the grid simply scales down.
 
     return (
         <div className={`mission-control-overlay ${isOpen ? 'open' : ''}`}>
@@ -67,7 +60,7 @@ const MissionControl: React.FC<MissionControlProps> = ({
                             width: '100%',
                             height: '100%',
                             zIndex: 1,
-                            pointerEvents: 'none' // Let clicks pass through empty areas
+                            pointerEvents: 'none'
                         }}
                     >
                         <div style={{ marginBottom: '20px', textAlign: 'center', pointerEvents: 'auto' }}>
