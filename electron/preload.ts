@@ -34,6 +34,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   removeDownloadItem: (id: string) => ipcRenderer.invoke('download:remove-item', id),
   clearDownloadHistory: () => ipcRenderer.invoke('download:clear-history'),
+
+  // Custom Shortcuts
+  onShortcutTrigger: (callback: (id: string) => void) => {
+    const subscription = (_e: any, id: string) => callback(id)
+    ipcRenderer.on('shortcut:trigger', subscription)
+    return () => ipcRenderer.removeListener('shortcut:trigger', subscription)
+  },
+  registerGlobalShortcut: (id: string, keys: string) => ipcRenderer.send('shortcuts:register-global', { id, keys }),
+  unregisterGlobalShortcut: (keys: string) => ipcRenderer.send('shortcuts:unregister-global', keys),
+  unregisterAllGlobalShortcuts: () => ipcRenderer.send('shortcuts:unregister-all'),
 })
 
 // Keep raw ipcRenderer if the template uses it, but we prefer the explicit API above

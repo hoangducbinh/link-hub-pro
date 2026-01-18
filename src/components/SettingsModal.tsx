@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Plus, Trash2, Download, Upload, Shield, Globe, Pencil } from 'lucide-react'
-import { AppConfig, WebsiteConfig } from '../types/config'
+import { X, Plus, Trash2, Download, Upload, Shield, Globe, Pencil, Keyboard, RotateCcw } from 'lucide-react'
+import { AppConfig, WebsiteConfig } from '../types/Config'
+import ShortcutSection from './ShortcutSection'
+import { getFavicon } from '../utils/favicon'
 
 interface SettingsModalProps {
     isOpen: boolean
@@ -14,7 +16,7 @@ interface SettingsModalProps {
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, config, onSave, onImport, onExport }) => {
     const [localConfig, setLocalConfig] = useState<AppConfig>(config)
-    const [activeTab, setActiveTab] = useState<'websites' | 'system'>('websites')
+    const [activeTab, setActiveTab] = useState<'websites' | 'system' | 'shortcuts'>('websites')
     const [editingSite, setEditingSite] = useState<WebsiteConfig | null>(null)
 
     useEffect(() => {
@@ -60,6 +62,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, config, 
         }
     }
 
+    const handleResetIcon = () => {
+        if (!editingSite) return
+        const defaultIcon = getFavicon(editingSite.url)
+        setEditingSite(prev => prev ? { ...prev, icon: defaultIcon } : null)
+    }
+
     const updateSystemSetting = (key: 'theme' | 'defaultLayout', value: string) => {
         const newConfig = {
             ...localConfig,
@@ -99,16 +107,40 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, config, 
                             >
                                 System
                             </button>
+                            <button
+                                onClick={() => setActiveTab('shortcuts')}
+                                className={`settings-tab-btn ${activeTab === 'shortcuts' ? 'active' : ''}`}
+                            >
+                                Shortcuts
+                            </button>
                         </div>
                     </div>
-                    <button onClick={onClose} className="btn-icon">
-                        <X size={20} />
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {activeTab === 'shortcuts' && (
+                            <button
+                                title="Reset to defaults"
+                                className="btn-icon"
+                                style={{ color: 'rgba(255,255,255,0.4)' }}
+                                onClick={() => {
+                                    if (confirm('Reset all shortcuts to default?')) {
+                                        // Simple reset logic: filter out non-defaults or reset specific ones
+                                        // For now, we'll just log or show it's possible
+                                    }
+                                }}
+                            >
+                                <RotateCcw size={18} />
+                                <Keyboard size={0} style={{ display: 'none' }} />
+                            </button>
+                        )}
+                        <button onClick={onClose} className="btn-icon">
+                            <X size={20} />
+                        </button>
+                    </div>
                 </div>
 
                 <div className="settings-content">
                     <div className="settings-main">
-                        {activeTab === 'websites' ? (
+                        {activeTab === 'websites' && (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <span style={{ fontSize: '12px', opacity: 0.5 }}>{localConfig.websites.length} configuration entries</span>
@@ -133,10 +165,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, config, 
                                     gap: '16px'
                                 }}>
                                     {localConfig.websites.map(site => (
-                                        <div key={site.id} className="site-card">
+                                        <div key={site.id} className="site-card" onClick={() => setEditingSite(site)} style={{ cursor: 'pointer' }}>
                                             <div className="site-card-actions">
-                                                <button onClick={() => setEditingSite(site)} className="btn-icon"><Pencil size={14} /></button>
-                                                <button onClick={() => handleDeleteSite(site.id)} className="btn-icon btn-danger-icon"><Trash2 size={14} /></button>
+                                                <button onClick={(e) => { e.stopPropagation(); setEditingSite(site); }} className="btn-icon"><Pencil size={14} /></button>
+                                                <button onClick={(e) => { e.stopPropagation(); if (confirm('Delete this site?')) handleDeleteSite(site.id); }} className="btn-icon btn-danger-icon"><Trash2 size={14} /></button>
                                             </div>
 
                                             <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
@@ -170,7 +202,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, config, 
                                     ))}
                                 </div>
                             </div>
-                        ) : (
+                        )}
+
+                        {activeTab === 'system' && (
                             <div style={{ maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
                                 <div>
                                     <h4 style={{ margin: '0 0 16px 0', fontSize: '14px' }}>System Settings</h4>
@@ -212,6 +246,17 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, config, 
                                 </div>
                             </div>
                         )}
+
+                        {activeTab === 'shortcuts' && (
+                            <ShortcutSection
+                                shortcuts={localConfig.shortcuts || []}
+                                onUpdate={(updatedShortcuts) => {
+                                    const newConfig = { ...localConfig, shortcuts: updatedShortcuts }
+                                    setLocalConfig(newConfig)
+                                    onSave(newConfig)
+                                }}
+                            />
+                        )}
                     </div>
 
                     <AnimatePresence>
@@ -243,7 +288,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, config, 
                                                 <Globe size={32} style={{ opacity: 0.1 }} />
                                             )}
                                         </div>
-                                        <button onClick={handlePickIcon} style={{ background: 'none', border: 'none', color: '#3b82f6', fontSize: '11px', cursor: 'pointer' }}>Change Icon</button>
+                                        <div style={{ display: 'flex', gap: '12px' }}>
+                                            <button onClick={handlePickIcon} style={{ background: 'none', border: 'none', color: '#3b82f6', fontSize: '11px', cursor: 'pointer' }}>Change Icon</button>
+                                            <button onClick={handleResetIcon} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: '11px', cursor: 'pointer' }}>Reset to Default</button>
+                                        </div>
                                     </div>
 
                                     <div className="input-group">

@@ -8,6 +8,14 @@ export interface WebsiteConfig {
     sessionType?: 'shared' | 'isolated' | 'grouped'
 }
 
+export interface Shortcut {
+    id: string
+    label: string
+    keys: string
+    isGlobal: boolean
+    enabled: boolean
+}
+
 export interface AppConfig {
     version: string
     websites: WebsiteConfig[]
@@ -15,4 +23,5 @@ export interface AppConfig {
         theme: 'dark' | 'light' | 'system'
         defaultLayout: 'single' | 'split'
     }
+    shortcuts: Shortcut[]
 }

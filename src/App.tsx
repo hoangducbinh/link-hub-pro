@@ -9,7 +9,7 @@ import DownloadManager, { DownloadItem } from './components/DownloadManager'
 import './App.css'
 
 import { getFavicon } from './utils/favicon'
-import { AppConfig, WebsiteConfig } from './types/config'
+import { AppConfig, WebsiteConfig } from './types/Config'
 
 const INITIAL_CONFIG: AppConfig = {
   version: '1.0.0',
@@ -23,7 +23,12 @@ const INITIAL_CONFIG: AppConfig = {
   settings: {
     theme: 'dark',
     defaultLayout: 'single'
-  }
+  },
+  shortcuts: [
+    { id: 'toggle-launcher', label: 'Toggle Launcher', keys: 'CommandOrControl+O', isGlobal: true, enabled: true },
+    { id: 'toggle-mission-control', label: 'Toggle Mission Control', keys: 'CommandOrControl+Shift+M', isGlobal: false, enabled: true },
+    { id: 'toggle-downloads', label: 'Toggle Downloads', keys: 'CommandOrControl+J', isGlobal: false, enabled: true }
+  ]
 }
 
 function App() {
@@ -49,7 +54,14 @@ function App() {
       try {
         const configs = await (window as any).electronAPI.loadConfigs()
         if (configs && configs.length > 0) {
-          setConfig(configs[0].data)
+          const loadedData = configs[0].data
+          // Ensure we have all the required fields and migrate old configs
+          setConfig({
+            ...INITIAL_CONFIG,
+            ...loadedData,
+            settings: { ...INITIAL_CONFIG.settings, ...(loadedData.settings || {}) },
+            shortcuts: loadedData.shortcuts || INITIAL_CONFIG.shortcuts
+          })
         } else {
           await (window as any).electronAPI.saveConfig({ name: 'default.json', data: INITIAL_CONFIG })
         }
@@ -282,6 +294,93 @@ function App() {
       ))
     })
   }, [])
+
+  // Shortcut logic
+  useEffect(() => {
+    const api = (window as any).electronAPI
+    if (!api) return
+
+    // helper to execute actions based on shortcut ID
+    const executeAction = (id: string) => {
+      switch (id) {
+        case 'toggle-launcher':
+          setIsLauncherOpen(prev => !prev)
+          break
+        case 'toggle-mission-control':
+          setIsMissionControlOpen(prev => !prev)
+          break
+        case 'focus-url-bar':
+          const urlInput = document.getElementById('url-input')
+          urlInput?.focus()
+          break
+        case 'new-tab':
+          // We don't have a direct "new blank tab" button yet, but we can open Google
+          const googleApp = config.websites.find(w => w.id === 'google')
+          if (googleApp) handleSelectApp(googleApp)
+          break
+        case 'close-tab':
+          // Close active tab in single layout
+          if (layout === 'single' && activeIds.length > 0) {
+            handleCloseWebView(activeIds[0])
+          }
+          break
+        case 'toggle-downloads':
+          setIsDownloadManagerOpen(prev => !prev)
+          break
+      }
+    }
+
+    // 1. Register Global Shortcuts
+    api.unregisterAllGlobalShortcuts()
+    const shortcuts = config.shortcuts || []
+    shortcuts.filter(s => s.isGlobal && s.enabled && s.keys).forEach(s => {
+      api.registerGlobalShortcut(s.id, s.keys)
+    })
+
+    // 2. Listen for Global/Local triggers from Main Process
+    const cleanup = api.onShortcutTrigger((id: string) => {
+      executeAction(id)
+    })
+
+    // 3. Local shortcuts (Renderer only)
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if typing in an input (unless it's the Escape key or something specific)
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return
+      }
+
+      const shortcuts = config.shortcuts || []
+      const activeShortcuts = shortcuts.filter(s => !s.isGlobal && s.enabled && s.keys)
+
+      for (const s of activeShortcuts) {
+        const parts = s.keys.split('+').map(p => p.toLowerCase().trim())
+        const isCtrl = parts.includes('control') || parts.includes('commandorcontrol') || parts.includes('cmdorctrl')
+        const isAlt = parts.includes('alt')
+        const isShift = parts.includes('shift')
+        const isMeta = parts.includes('command') || parts.includes('meta') || parts.includes('commandorcontrol') || parts.includes('cmdorctrl')
+        const key = parts[parts.length - 1]
+
+        const matchKey = e.key.toLowerCase() === key
+
+        // Simplify for common patterns (Cmd/Ctrl + Key)
+        const isCmdCtrl = e.metaKey || e.ctrlKey
+        const sHasCmdCtrl = isCtrl || isMeta
+
+        if (matchKey && (isCmdCtrl === sHasCmdCtrl) && (e.shiftKey === isShift) && (e.altKey === isAlt)) {
+          e.preventDefault()
+          executeAction(s.id)
+          break
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      cleanup()
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [config.shortcuts, activeIds, layout])
 
   const handleSaveConfig = async (newConfig: AppConfig) => {
     setConfig(newConfig)

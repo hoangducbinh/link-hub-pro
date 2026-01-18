@@ -55,12 +55,7 @@ function createWindow() {
     }
   })
 
-  // Register global shortcut
-  const shortcut = 'CommandOrControl+O'
-  globalShortcut.unregister(shortcut) // Ensure no duplicates
-  globalShortcut.register(shortcut, () => {
-    mainWindow?.webContents.send('toggle-launcher')
-  })
+  // Dynamic shortcuts will be registered via IPC from the renderer
 
   if (VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(VITE_DEV_SERVER_URL)
@@ -165,6 +160,27 @@ ipcMain.handle('config:pick-icon', async () => {
     return `data:${mime};base64,${base64}`
   }
   return null
+})
+
+// Shortcut Management IPC
+ipcMain.on('shortcuts:register-global', (_, { id, keys }) => {
+  try {
+    globalShortcut.unregister(keys) // Unregister if already exists
+    const success = globalShortcut.register(keys, () => {
+      mainWindow?.webContents.send('shortcut:trigger', id)
+    })
+    if (!success) console.warn(`Failed to register global shortcut: ${keys}`)
+  } catch (e) {
+    console.error(`Error registering shortcut ${keys}:`, e)
+  }
+})
+
+ipcMain.on('shortcuts:unregister-global', (_, keys) => {
+  globalShortcut.unregister(keys)
+})
+
+ipcMain.on('shortcuts:unregister-all', () => {
+  globalShortcut.unregisterAll()
 })
 
 // Download Management
