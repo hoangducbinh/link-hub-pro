@@ -385,7 +385,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, config, 
                                                             </div>
                                                         </div>
                                                         {passwordError && <div style={{ color: '#ef4444', fontSize: '11px' }}>{passwordError}</div>}
-                                                        <button className="btn-primary" onClick={handleSetPassword} disabled={!newPassword || !confirmPassword || !newRecoveryKey || !confirmRecoveryKey}>Enable App Lock</button>
+                                                        <button style={{ padding: '12px 20px', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer' }} onClick={handleSetPassword} disabled={!newPassword || !confirmPassword || !newRecoveryKey || !confirmRecoveryKey}>Enable App Lock</button>
                                                     </div>
                                                 </div>
                                             )}

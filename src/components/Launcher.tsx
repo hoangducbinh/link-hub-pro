@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, Globe, ArrowRight } from 'lucide-react'
+import { getFavicon } from '../utils/favicon'
 
 export interface AppIcon {
     id: string
@@ -109,23 +110,39 @@ const Launcher: React.FC<LauncherProps> = ({ isOpen, onClose, onSelect, apps }) 
                                     onChange={(e) => setSearch(e.target.value)}
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter') {
-                                            if (search.trim()) {
-                                                const query = search.trim();
-                                                const isUrl = query.includes('.') && !query.includes(' ') || query.startsWith('http');
-                                                if (isUrl) {
-                                                    const url = query.startsWith('http') ? query : `https://${query}`;
-                                                    const hostname = new URL(url).hostname;
-                                                    onSelect({
-                                                        id: `custom-${Date.now()}`,
-                                                        name: hostname,
-                                                        url: url,
-                                                        icon: `https://www.google.com/s2/favicons?domain=${hostname}&sz=128`
-                                                    });
-                                                } else if (filteredApps.length > 0) {
-                                                    onSelect(filteredApps[activeIndex]);
-                                                }
-                                            } else {
+                                            const query = search.trim();
+                                            if (!query) {
                                                 if (filteredApps.length > 0) onSelect(filteredApps[activeIndex]);
+                                                return;
+                                            }
+
+                                            // URL detection logic
+                                            const isUrl = query.includes('.') && !query.includes(' ') || query.startsWith('http') || query.startsWith('localhost');
+
+                                            if (isUrl) {
+                                                const url = query.startsWith('http') ? query : `https://${query}`;
+                                                let hostname = '';
+                                                try {
+                                                    hostname = new URL(url).hostname;
+                                                } catch (e) {
+                                                    hostname = query;
+                                                }
+                                                onSelect({
+                                                    id: `custom-${Date.now()}`,
+                                                    name: hostname,
+                                                    url: url,
+                                                    icon: `https://www.google.com/s2/favicons?domain=${hostname}&sz=128`
+                                                });
+                                            } else if (filteredApps.length > 0) {
+                                                onSelect(filteredApps[activeIndex]);
+                                            } else {
+                                                // Fallback to Google Search
+                                                onSelect({
+                                                    id: `search-${Date.now()}`,
+                                                    name: `Search: ${query}`,
+                                                    url: `https://www.google.com/search?q=${encodeURIComponent(query)}`,
+                                                    icon: getFavicon('https://www.google.com/')
+                                                });
                                             }
                                         }
                                     }}

@@ -572,9 +572,12 @@ function App() {
         currentTheme={config.settings.theme}
         currentLayout={layout}
         currentUrl={currentUrl}
-        onNavigate={() => {
-          if (activeIds.length > 0) {
-          }
+        onNavigate={(url) => {
+          const activeId = activeIds[0]
+          if (!activeId) return
+          setActiveWebViews(prev => prev.map(wv =>
+            wv.instanceId === activeId ? { ...wv, url } : wv
+          ))
         }}
         isCurrentTabLockable={!!config.websites.find(w => w.id === activeWebViews.find(wv => wv.instanceId === activeIds[0])?.appId)?.requirePassword}
         isCurrentTabLocked={activeWebViews.find(wv => wv.instanceId === activeIds[0])?.isLocked}
