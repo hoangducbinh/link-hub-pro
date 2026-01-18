@@ -9,6 +9,7 @@ import SettingsModal from './components/SettingsModal'
 import SettingsMenu from './components/SettingsMenu'
 import DownloadManager, { DownloadItem } from './components/DownloadManager'
 import AppLockOverlay from './components/AppLockOverlay'
+import UpdateOverlay from './components/UpdateOverlay'
 import './App.css'
 
 import { getFavicon } from './utils/favicon'
@@ -723,6 +724,7 @@ function App() {
           />
         )}
       </AnimatePresence>
+      <UpdateOverlay />
     </div>
   )
 }

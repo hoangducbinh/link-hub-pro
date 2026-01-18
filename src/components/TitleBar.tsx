@@ -122,8 +122,12 @@ const TitleBar: React.FC<TitleBarProps> = ({
         </div>
     )
 
+    const handleDoubleClick = () => {
+        (window as any).electronAPI.maximize()
+    }
+
     return (
-        <div className="title-bar">
+        <div className="title-bar" onDoubleClick={handleDoubleClick}>
             {isMac ? <div className="macos-traffic-lights-spacer"></div> : <WindowControls />}
 
             {/* Left Group: Navigation */}

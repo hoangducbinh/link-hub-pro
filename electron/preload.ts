@@ -60,6 +60,21 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Security APIs
   hashPassword: (password: string) => ipcRenderer.invoke('security:hash-password', password),
   verifyPassword: (password: string, hash: string) => ipcRenderer.invoke('security:verify-password', { password, hash }),
+
+  // Auto Updater APIs
+  checkForUpdates: () => ipcRenderer.send('update:check'),
+  downloadUpdate: () => ipcRenderer.send('update:download'),
+  installUpdate: () => ipcRenderer.send('update:install'),
+  onUpdateStatus: (callback: (data: { status: string, version?: string, error?: string }) => void) => {
+    const listener = (_e: any, data: any) => callback(data)
+    ipcRenderer.on('update:status', listener)
+    return () => ipcRenderer.removeListener('update:status', listener)
+  },
+  onUpdateProgress: (callback: (data: { percent: number, transferred: number, total: number, bytesPerSecond: number }) => void) => {
+    const listener = (_e: any, data: any) => callback(data)
+    ipcRenderer.on('update:progress', listener)
+    return () => ipcRenderer.removeListener('update:progress', listener)
+  },
 })
 
 // Keep raw ipcRenderer if the template uses it, but we prefer the explicit API above

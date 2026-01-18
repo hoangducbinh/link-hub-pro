@@ -86,7 +86,7 @@ ipcMain.on('show-context-menu', (event, params) => {
   menu.popup({ window: win!, x: params.x, y: params.y })
 })
 
-ipcMain.on('show-download-menu', (event, item) => {
+ipcMain.on('show-download-menu', (event) => {
   const win = BrowserWindow.fromWebContents(event.sender) || mainWindow
   if (win?.isMaximized()) {
     win.unmaximize()
@@ -441,4 +441,60 @@ app.on('will-quit', () => {
 
 app.whenReady().then(() => {
   createWindow()
+
+  // Check for updates after window is ready
+  // In production, this checks the release server. In dev, via dev-app-update.yml if configured.
+  if (!process.env.VITE_DEV_SERVER_URL) {
+    autoUpdater.checkForUpdatesAndNotify()
+  }
+})
+
+// --- Auto Updater Logic ---
+import { autoUpdater } from 'electron-updater'
+import log from 'electron-log'
+
+log.transports.file.level = 'info';
+autoUpdater.logger = log;
+
+// Events
+autoUpdater.on('checking-for-update', () => {
+  mainWindow?.webContents.send('update:status', { status: 'checking' })
+})
+
+autoUpdater.on('update-available', (info) => {
+  mainWindow?.webContents.send('update:status', { status: 'available', version: info.version })
+})
+
+autoUpdater.on('update-not-available', () => {
+  mainWindow?.webContents.send('update:status', { status: 'not-available' })
+})
+
+autoUpdater.on('error', (err) => {
+  mainWindow?.webContents.send('update:status', { status: 'error', error: err.message })
+})
+
+autoUpdater.on('download-progress', (progressObj) => {
+  mainWindow?.webContents.send('update:progress', {
+    percent: progressObj.percent,
+    transferred: progressObj.transferred,
+    total: progressObj.total,
+    bytesPerSecond: progressObj.bytesPerSecond
+  })
+})
+
+autoUpdater.on('update-downloaded', (info) => {
+  mainWindow?.webContents.send('update:status', { status: 'downloaded', version: info.version })
+})
+
+// IPC to control update
+ipcMain.on('update:check', () => {
+  autoUpdater.checkForUpdates()
+})
+
+ipcMain.on('update:download', () => {
+  autoUpdater.downloadUpdate()
+})
+
+ipcMain.on('update:install', () => {
+  autoUpdater.quitAndInstall()
 })
