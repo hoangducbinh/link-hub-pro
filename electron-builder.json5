@@ -39,5 +39,12 @@
       "AppImage"
     ],
     "artifactName": "${productName}-Linux-${version}.${ext}"
-  }
+  },
+  "publish": [
+    {
+      "provider": "github",
+      "owner": "hoangducbinh",
+      "repo": "https://github.com/hoangducbinh/link-hub-pro.git"
+    }
+  ]
 }
