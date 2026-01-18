@@ -5,6 +5,7 @@ export interface WebViewInfo {
     appId: string
     url: string
     name: string
+    icon?: string
     partition?: string
 }
 

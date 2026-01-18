@@ -5,12 +5,14 @@ import TitleBar from './components/TitleBar'
 import MissionControl from './components/MissionControl'
 import './App.css'
 
+import { getFavicon } from './utils/favicon'
+
 const DEFAULT_APPS: AppIcon[] = [
-  { id: 'google', name: 'Google', url: 'https://www.google.com/' },
-  { id: 'youtube', name: 'YouTube', url: 'https://www.youtube.com/?app=desktop&hl=vi' },
-  { id: 'github', name: 'GitHub', url: 'https://github.com/' },
-  { id: 'chatgpt', name: 'ChatGPT', url: 'https://chatgpt.com/' },
-  { id: 'gemini', name: 'Gemini', url: 'https://gemini.google.com/' },
+  { id: 'google', name: 'Google', url: 'https://www.google.com/', icon: getFavicon('https://www.google.com/') },
+  { id: 'youtube', name: 'YouTube', url: 'https://www.youtube.com/?app=desktop&hl=vi', icon: getFavicon('https://www.youtube.com/') },
+  { id: 'github', name: 'GitHub', url: 'https://github.com/', icon: getFavicon('https://github.com/') },
+  { id: 'chatgpt', name: 'ChatGPT', url: 'https://chatgpt.com/', icon: getFavicon('https://chatgpt.com/') },
+  { id: 'gemini', name: 'Gemini', url: 'https://gemini.google.com/', icon: getFavicon('https://gemini.google.com/') },
 ]
 
 function App() {
@@ -26,6 +28,7 @@ function App() {
       appId: googleApp.id,
       url: googleApp.url,
       name: googleApp.name,
+      icon: googleApp.icon,
       partition: 'persist:main'
     }]
   })
@@ -53,10 +56,11 @@ function App() {
     const updateUrl = () => {
       if (!webviewEl.isDestroyed?.()) {
         const newUrl = webviewEl.getURL()
+        const newIcon = getFavicon(newUrl)
         setCurrentUrl(newUrl)
-        // Update URL in our state list too so it's fresh for Mission Control/reloads
+        // Update URL and Icon in our state list
         setActiveWebViews(prev => prev.map(w =>
-          w.instanceId === activeId ? { ...w, url: newUrl } : w
+          w.instanceId === activeId ? { ...w, url: newUrl, icon: newIcon } : w
         ))
       }
     }

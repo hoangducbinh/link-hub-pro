@@ -143,7 +143,11 @@ const MissionControl: React.FC<MissionControlProps> = ({
                                                     justifyContent: 'center',
                                                     flexShrink: 0
                                                 }}>
-                                                    <Globe size={12} color="rgba(255,255,255,0.8)" />
+                                                    {wv.icon ? (
+                                                        <img src={wv.icon} style={{ width: '16px', height: '16px', borderRadius: '2px' }} alt="" />
+                                                    ) : (
+                                                        <Globe size={12} color="rgba(255,255,255,0.8)" />
+                                                    )}
                                                 </div>
                                                 <div style={{ flex: 1, overflow: 'hidden' }}>
                                                     <div style={{
