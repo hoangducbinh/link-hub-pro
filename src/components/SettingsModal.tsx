@@ -209,14 +209,21 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, config, 
                 >
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        animate={{
+                            opacity: 1,
+                            scale: 1,
+                            y: 0,
+                            width: editingSite ? '1380px' : '1000px'
+                        }}
                         exit={{ opacity: 0, scale: 0.9, y: 20 }}
                         transition={{ type: 'spring', damping: 25, stiffness: 400 }}
                         className="modal-content"
                         style={{
-                            width: '1000px',
-                            height: '800px',
+                            height: '860px',
                             backgroundColor: 'var(--modal-bg)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            overflow: 'hidden'
                         }}
                         onClick={e => e.stopPropagation()}
                     >
@@ -259,16 +266,16 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, config, 
                             </div>
                         </div>
 
-                        <div className="settings-content">
-                            <div className="settings-main">
+                        <div className="settings-content" style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+                            <div className="settings-main" style={{ flex: 1, height: '100%', overflowY: 'auto' }}>
                                 {activeTab === 'websites' && (
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                             <span style={{ fontSize: '12px', opacity: 0.5 }}>{localConfig.websites.length} configuration entries</span>
                                             <button
-                                                className="btn-secondary"
+                                                className="btn-primary"
                                                 onClick={() => setEditingSite({ id: `site-${Date.now()}`, name: '', url: '', sessionType: 'shared', group: 'Default' })}
-                                                style={{ backgroundColor: '#3b82f6', border: 'none' }}
+                                                style={{ border: 'none', padding: '8px 12px', borderRadius: '10px' }}
                                             >
                                                 <Plus size={16} /> New Entry
                                             </button>
@@ -281,7 +288,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, config, 
                                                         <button onClick={(e) => { e.stopPropagation(); if (confirm('Delete this site?')) handleDeleteSite(site.id); }} className="btn-icon btn-danger-icon"><Trash2 size={14} /></button>
                                                     </div>
                                                     <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                                                        <div style={{ width: '48px', height: '48px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                                                        <div style={{ width: '48px', height: '48px', backgroundColor: 'var(--btn-hover-bg)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                                                             {site.icon ? <img src={site.icon} style={{ width: '32px', height: '32px', objectFit: 'contain' }} alt="" /> : <Globe size={24} style={{ opacity: 0.2 }} />}
                                                         </div>
                                                         <div style={{ flex: 1, minWidth: 0 }}>
@@ -290,9 +297,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, config, 
                                                         </div>
                                                     </div>
                                                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '4px' }}>
-                                                        <span className="label-tiny" style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '4px' }}>{site.sessionType || 'shared'}</span>
-                                                        <span className="label-tiny" style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '4px' }}>{site.group || 'General'}</span>
-                                                        {site.requirePassword && <span className="label-tiny" style={{ backgroundColor: 'rgba(234, 179, 8, 0.1)', color: '#eab308', padding: '2px 8px', borderRadius: '4px' }}>Locked</span>}
+                                                        <span className="label-tiny" style={{ backgroundColor: 'var(--btn-hover-bg)', padding: '2px 8px', borderRadius: '4px' }}>{site.sessionType || 'shared'}</span>
+                                                        <span className="label-tiny" style={{ backgroundColor: 'var(--btn-hover-bg)', padding: '2px 8px', borderRadius: '4px' }}>{site.group || 'General'}</span>
+                                                        {site.requirePassword && <span className="label-tiny" style={{ backgroundColor: 'var(--accent-glow)', color: 'var(--accent-color)', padding: '2px 8px', borderRadius: '4px' }}>Locked</span>}
                                                     </div>
                                                 </div>
                                             ))}
@@ -336,9 +343,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, config, 
                                             <div style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
                                                 <div style={{
                                                     width: '40px', height: '40px',
-                                                    backgroundColor: localConfig.security.appLockEnabled ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255,100,100,0.05)',
+                                                    backgroundColor: localConfig.security.appLockEnabled ? 'var(--accent-glow)' : 'var(--btn-hover-bg)',
                                                     borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                    color: localConfig.security.appLockEnabled ? '#3b82f6' : '#ef4444'
+                                                    color: localConfig.security.appLockEnabled ? 'var(--accent-color)' : 'var(--text-tertiary)'
                                                 }}>
                                                     {localConfig.security.appLockEnabled ? <Lock size={20} /> : <Shield size={20} />}
                                                 </div>
@@ -349,7 +356,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, config, 
                                                 <div
                                                     onClick={() => localConfig.security.appLockEnabled ? updateSecuritySetting({ appLockEnabled: false }) : setShowPasswordSetup(true)}
                                                     style={{
-                                                        width: '44px', height: '24px', backgroundColor: localConfig.security.appLockEnabled ? '#3b82f6' : 'rgba(255,255,255,0.1)',
+                                                        width: '44px', height: '24px', backgroundColor: localConfig.security.appLockEnabled ? 'var(--accent-color)' : 'var(--border-color)',
                                                         borderRadius: '12px', padding: '2px', cursor: 'pointer', position: 'relative'
                                                     }}
                                                 >
@@ -449,118 +456,191 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, config, 
                                 )}
                             </div>
 
-                        </div>
+                            <AnimatePresence>
+                                {editingSite && (
+                                    <motion.div
+                                        initial={{ opacity: 0, width: 0 }}
+                                        animate={{ opacity: 1, width: '400px' }}
+                                        exit={{ opacity: 0, width: 0 }}
+                                        transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+                                        style={{
+                                            height: '100%',
+                                            backgroundColor: 'var(--menu-bg)',
+                                            backdropFilter: 'blur(var(--blur-heavy))',
+                                            borderLeft: '1px solid var(--border-color)',
+                                            padding: '40px 32px',
+                                            boxShadow: 'var(--shadow-premium)',
+                                            zIndex: 10,
+                                            overflow: 'hidden',
+                                            display: 'flex',
+                                            flexDirection: 'column'
+                                        }}
+                                    >
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+                                            <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>{editingSite.name ? 'Edit Website' : 'Add Website'}</h3>
+                                            <button onClick={() => setEditingSite(null)} className="tool-btn" style={{ width: '32px', height: '32px', borderRadius: '50%' }}><X size={18} /></button>
+                                        </div>
 
-                        <AnimatePresence>
-                            {editingSite && (
-                                <motion.div
-                                    initial={{ x: 380 }}
-                                    animate={{ x: 0 }}
-                                    exit={{ x: 380 }}
-                                    transition={{ type: 'spring', damping: 25, stiffness: 400 }}
-                                    className="settings-sidebar"
-                                    style={{
-                                        position: 'absolute',
-                                        right: 0,
-                                        top: 0,
-                                        bottom: 0,
-                                        width: '380px',
-                                        backgroundColor: '#161616',
-                                        borderLeft: '1px solid var(--border-color)',
-                                        padding: '32px',
-                                        boxShadow: '-10px 0 30px rgba(0,0,0,0.3)',
-                                        zIndex: 10
-                                    }}
-                                >
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-                                        <h3 style={{ margin: 0, fontSize: '18px' }}>{editingSite.name ? 'Edit Website' : 'Add Website'}</h3>
-                                        <button onClick={() => setEditingSite(null)} className="tool-btn"><X size={20} /></button>
-                                    </div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                            {/* Branding Section */}
+                                            <div style={{
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                padding: '24px',
+                                                backgroundColor: 'var(--card-bg)',
+                                                borderRadius: '24px',
+                                                border: '1px solid var(--border-color)',
+                                                marginBottom: '8px',
+                                                position: 'relative',
+                                                overflow: 'hidden'
+                                            }}>
+                                                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '40px', background: 'linear-gradient(to bottom, var(--accent-glow), transparent)', opacity: 0.3 }} />
 
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', marginBottom: '12px' }}>
-                                            <div
-                                                style={{
-                                                    width: '96px', height: '96px',
-                                                    backgroundColor: 'rgba(255,255,255,0.03)',
-                                                    borderRadius: '24px',
-                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                    cursor: 'pointer',
+                                                <div
+                                                    style={{
+                                                        width: '88px', height: '88px',
+                                                        backgroundColor: 'var(--menu-bg)',
+                                                        borderRadius: '22px',
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                        cursor: 'pointer',
+                                                        border: '1px solid var(--border-color)',
+                                                        boxShadow: 'var(--shadow-premium)',
+                                                        transition: 'all var(--duration-standard) var(--spring-easing)',
+                                                        zIndex: 2
+                                                    }}
+                                                    onClick={handlePickIcon}
+                                                >
+                                                    {editingSite.icon ? <img src={editingSite.icon} style={{ width: '56px', height: '56px', objectFit: 'contain' }} alt="" /> : <Globe size={36} style={{ color: 'var(--accent-color)', opacity: 0.5 }} />}
+                                                </div>
+                                                <div style={{ display: 'flex', gap: '16px', marginTop: '16px' }}>
+                                                    <button onClick={handlePickIcon} style={{ background: 'none', border: 'none', color: 'var(--accent-color)', fontSize: '12px', fontWeight: 600, cursor: 'pointer', letterSpacing: '0.2px' }}>CHANGE ICON</button>
+                                                    <button onClick={handleResetIcon} style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', fontSize: '11px', fontWeight: 500, cursor: 'pointer' }}>RESET</button>
+                                                </div>
+                                            </div>
+
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                                <div className="input-group" style={{
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    gap: '4px',
+                                                    padding: '12px 16px',
+                                                    backgroundColor: 'var(--btn-hover-bg)',
+                                                    borderRadius: '16px',
                                                     border: '1px solid var(--border-color)',
-                                                    boxShadow: 'var(--shadow-premium)',
-                                                    transition: 'all 0.2s ease',
-                                                    overflow: 'hidden'
+                                                    transition: 'border-color 0.2s ease'
+                                                }}>
+                                                    <label style={{ color: 'var(--accent-color)', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Display Name</label>
+                                                    <input
+                                                        type="text"
+                                                        style={{
+                                                            background: 'none',
+                                                            border: 'none',
+                                                            padding: 0,
+                                                            color: 'var(--text-primary)',
+                                                            fontSize: '15px',
+                                                            outline: 'none',
+                                                            width: '100%'
+                                                        }}
+                                                        placeholder="Enter site name..."
+                                                        value={editingSite.name}
+                                                        onChange={e => setEditingSite({ ...editingSite, name: e.target.value })}
+                                                    />
+                                                </div>
+
+                                                <div className="input-group" style={{
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    gap: '4px',
+                                                    padding: '12px 16px',
+                                                    backgroundColor: 'var(--btn-hover-bg)',
+                                                    borderRadius: '16px',
+                                                    border: '1px solid var(--border-color)'
+                                                }}>
+                                                    <label style={{ color: 'var(--accent-color)', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>URL</label>
+                                                    <input
+                                                        type="text"
+                                                        style={{
+                                                            background: 'none',
+                                                            border: 'none',
+                                                            padding: 0,
+                                                            color: 'var(--text-primary)',
+                                                            fontSize: '15px',
+                                                            outline: 'none',
+                                                            width: '100%'
+                                                        }}
+                                                        placeholder="https://example.com"
+                                                        value={editingSite.url}
+                                                        onChange={e => setEditingSite({ ...editingSite, url: e.target.value })}
+                                                    />
+                                                </div>
+
+                                                <div className="input-group" style={{
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    gap: '4px',
+                                                    padding: '12px 16px',
+                                                    backgroundColor: 'var(--btn-hover-bg)',
+                                                    borderRadius: '16px',
+                                                    border: '1px solid var(--border-color)'
+                                                }}>
+                                                    <label style={{ color: 'var(--accent-color)', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Category</label>
+                                                    <input
+                                                        type="text"
+                                                        style={{
+                                                            background: 'none',
+                                                            border: 'none',
+                                                            padding: 0,
+                                                            color: 'var(--text-primary)',
+                                                            fontSize: '15px',
+                                                            outline: 'none',
+                                                            width: '100%'
+                                                        }}
+                                                        placeholder="e.g. Work, Social, Tools"
+                                                        value={editingSite.group || ''}
+                                                        onChange={e => setEditingSite({ ...editingSite, group: e.target.value })}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div style={{
+                                                display: 'flex', alignItems: 'center', gap: '14px',
+                                                padding: '16px 20px', backgroundColor: 'var(--btn-hover-bg)',
+                                                borderRadius: '16px', border: '1px solid var(--border-color)',
+                                                marginTop: '8px'
+                                            }}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={!!editingSite.requirePassword}
+                                                    onChange={e => setEditingSite({ ...editingSite, requirePassword: e.target.checked })}
+                                                    style={{ width: '18px', height: '18px', accentColor: 'var(--accent-color)', cursor: 'pointer' }}
+                                                />
+                                                <div style={{ flex: 1 }}>
+                                                    <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '0.2px' }}>Security Lock</div>
+                                                    <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '2px' }}>Authentication required to open</div>
+                                                </div>
+                                            </div>
+
+                                            <button
+                                                className="btn-primary"
+                                                style={{
+                                                    marginTop: '20px',
+                                                    height: '52px',
+                                                    borderRadius: '16px',
+                                                    fontSize: '15px',
+                                                    fontWeight: 600,
+                                                    width: '100%',
+                                                    boxShadow: '0 8px 20px var(--accent-glow)'
                                                 }}
-                                                onClick={handlePickIcon}
+                                                onClick={handleSaveSite}
                                             >
-                                                {editingSite.icon ? <img src={editingSite.icon} style={{ width: '64px', height: '64px', objectFit: 'contain' }} alt="" /> : <Globe size={40} style={{ opacity: 0.1 }} />}
-                                            </div>
-                                            <div style={{ display: 'flex', gap: '16px' }}>
-                                                <button onClick={handlePickIcon} style={{ background: 'none', border: 'none', color: 'var(--accent-color)', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>Change Icon</button>
-                                                <button onClick={handleResetIcon} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '12px', cursor: 'pointer' }}>Reset</button>
-                                            </div>
+                                                {editingSite.id.startsWith('site-') ? 'Create Website' : 'Save Changes'}
+                                            </button>
                                         </div>
-
-                                        <div className="input-group">
-                                            <label className="label-tiny">Display Name</label>
-                                            <input
-                                                type="text"
-                                                className="address-bar-input"
-                                                style={{ textAlign: 'left', padding: '0 12px', height: '36px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '8px', border: '1px solid var(--border-color)' }}
-                                                value={editingSite.name}
-                                                onChange={e => setEditingSite({ ...editingSite, name: e.target.value })}
-                                            />
-                                        </div>
-                                        <div className="input-group">
-                                            <label className="label-tiny">URL</label>
-                                            <input
-                                                type="text"
-                                                className="address-bar-input"
-                                                style={{ textAlign: 'left', padding: '0 12px', height: '36px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '8px', border: '1px solid var(--border-color)' }}
-                                                value={editingSite.url}
-                                                onChange={e => setEditingSite({ ...editingSite, url: e.target.value })}
-                                            />
-                                        </div>
-                                        <div className="input-group">
-                                            <label className="label-tiny">Group / Category</label>
-                                            <input
-                                                type="text"
-                                                className="address-bar-input"
-                                                style={{ textAlign: 'left', padding: '0 12px', height: '36px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '8px', border: '1px solid var(--border-color)' }}
-                                                value={editingSite.group || ''}
-                                                onChange={e => setEditingSite({ ...editingSite, group: e.target.value })}
-                                            />
-                                        </div>
-
-                                        <div style={{
-                                            display: 'flex', alignItems: 'center', gap: '16px',
-                                            padding: '16px', backgroundColor: 'rgba(255,255,255,0.02)',
-                                            borderRadius: '16px', border: '1px solid var(--border-color)',
-                                            marginTop: '12px'
-                                        }}>
-                                            <input
-                                                type="checkbox"
-                                                checked={!!editingSite.requirePassword}
-                                                onChange={e => setEditingSite({ ...editingSite, requirePassword: e.target.checked })}
-                                                style={{ width: '20px', height: '20px' }}
-                                            />
-                                            <div style={{ flex: 1 }}>
-                                                <div style={{ fontSize: '14px', fontWeight: 600 }}>Biometric / Password Auth</div>
-                                                <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Protect this tab with your password</div>
-                                            </div>
-                                        </div>
-
-                                        <button
-                                            className="btn-primary"
-                                            style={{ marginTop: '24px', height: '44px', borderRadius: '12px', fontSize: '15px' }}
-                                            onClick={handleSaveSite}
-                                        >
-                                            {editingSite.id.startsWith('site-') ? 'Create Website' : 'Update Website'}
-                                        </button>
-                                    </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
 
                         <SelectiveExportModal
                             isOpen={isExportModalOpen}

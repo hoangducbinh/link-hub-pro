@@ -63,8 +63,9 @@ const MissionControl: React.FC<MissionControlProps> = ({
                             pointerEvents: 'none'
                         }}
                     >
-                        <div style={{ marginBottom: '20px', textAlign: 'center', pointerEvents: 'auto' }}>
-                            <h2 style={{ fontSize: '24px', fontWeight: 600, color: 'white', margin: 0, letterSpacing: '-0.5px' }}>Mission Control</h2>
+                        <div style={{ marginBottom: '32px', textAlign: 'center', pointerEvents: 'auto' }}>
+                            <h2 style={{ fontSize: '28px', fontWeight: 600, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.8px' }}>Mission Control</h2>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginTop: '8px', opacity: 0.8 }}>Manage your active windows</p>
                         </div>
 
                         <div
@@ -110,7 +111,7 @@ const MissionControl: React.FC<MissionControlProps> = ({
                                                 onCloseWebView(wv.instanceId)
                                             }}
                                             style={{
-                                                backgroundColor: 'rgba(30, 30, 30, 0.4)',
+                                                backgroundColor: 'var(--card-bg)',
                                                 borderRadius: 'var(--radius-premium)',
                                                 cursor: 'pointer',
                                                 border: '1px solid var(--border-color)',
@@ -214,8 +215,9 @@ const MissionControl: React.FC<MissionControlProps> = ({
                                 width: '44px',
                                 height: '44px',
                                 borderRadius: '50%',
-                                backgroundColor: 'rgba(255,255,255,0.05)',
+                                backgroundColor: 'var(--btn-hover-bg)',
                                 border: '1px solid var(--border-color)',
+                                backdropFilter: 'blur(var(--blur-light))',
                                 pointerEvents: 'auto',
                                 opacity: 1
                             }}

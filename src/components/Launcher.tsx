@@ -131,30 +131,30 @@ const Launcher: React.FC<LauncherProps> = ({ isOpen, onClose, onSelect, apps }) 
                                     }}
                                     style={{
                                         width: '100%',
-                                        padding: '12px 12px 12px 42px', // Compact padding
+                                        padding: '14px 16px 14px 48px',
                                         borderRadius: 'var(--radius-premium)',
-                                        border: '1px solid var(--border-bright)',
-                                        backgroundColor: 'rgba(20, 20, 20, 0.8)',
-                                        color: 'white',
-                                        fontSize: '15px',
+                                        border: '1px solid var(--border-color)',
+                                        backgroundColor: 'var(--card-bg)',
+                                        color: 'var(--text-primary)',
+                                        fontSize: '16px',
                                         fontWeight: 400,
                                         outline: 'none',
                                         boxShadow: 'var(--shadow-premium)',
                                         backdropFilter: 'blur(var(--blur-medium))',
                                         textAlign: 'left',
-                                        transition: 'all 0.2s ease'
+                                        transition: 'all var(--duration-standard) var(--standard-easing)'
                                     }}
                                 />
                                 <Search
                                     style={{
                                         position: 'absolute',
-                                        left: '14px',
+                                        left: '18px',
                                         top: '50%',
                                         transform: 'translateY(-50%)',
-                                        opacity: 0.5,
-                                        color: 'white'
+                                        opacity: 0.6,
+                                        color: 'var(--text-secondary)'
                                     }}
-                                    size={18}
+                                    size={20}
                                 />
                                 {search.trim() && (
                                     <div style={{
@@ -218,20 +218,20 @@ const Launcher: React.FC<LauncherProps> = ({ isOpen, onClose, onSelect, apps }) 
                                     }}
                                 >
                                     <div style={{
-                                        width: '64px',
-                                        height: '64px',
-                                        borderRadius: '16px',
-                                        backgroundColor: activeIndex === index ? 'var(--btn-active-bg)' : 'var(--btn-hover-bg)',
+                                        width: '72px',
+                                        height: '72px',
+                                        borderRadius: '20px',
+                                        backgroundColor: activeIndex === index ? 'var(--btn-active-bg)' : 'var(--card-bg)',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        marginBottom: '10px',
-                                        boxShadow: activeIndex === index ? '0 8px 32px rgba(0,0,0,0.4)' : '0 2px 12px rgba(0,0,0,0.1)',
+                                        marginBottom: '12px',
+                                        boxShadow: activeIndex === index ? '0 12px 40px rgba(0,0,0,0.3)' : '0 4px 12px rgba(0,0,0,0.1)',
                                         overflow: 'hidden',
-                                        border: activeIndex === index ? '1px solid var(--accent-color)' : '1px solid var(--border-color)',
-                                        backdropFilter: 'blur(12px)',
+                                        border: activeIndex === index ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
+                                        backdropFilter: 'blur(var(--blur-light))',
                                         position: 'relative',
-                                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
+                                        transition: 'all var(--duration-standard) var(--spring-easing)'
                                     }}>
                                         {app.icon ? (
                                             <img

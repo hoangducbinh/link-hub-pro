@@ -16,22 +16,25 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({ isOpen, onClose, anchorRect
         display: 'flex',
         alignItems: 'center',
         gap: '12px',
-        padding: '8px 12px',
+        padding: '10px 14px',
         border: 'none',
         background: 'none',
-        borderRadius: '8px',
-        color: 'white',
-        fontSize: '13px',
+        borderRadius: '10px',
+        color: 'var(--text-primary)',
+        fontSize: '13.5px',
+        fontWeight: 400,
         cursor: 'pointer',
-        transition: 'background-color 0.2s'
+        transition: 'all var(--duration-fast) var(--standard-easing)'
     }
 
     const hoverStyle = (e: React.MouseEvent) => {
-        (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255, 255, 255, 0.1)'
+        (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--btn-hover-bg)';
+        (e.currentTarget as HTMLElement).style.transform = 'translateX(2px)';
     }
 
     const leaveStyle = (e: React.MouseEvent) => {
-        (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
+        (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+        (e.currentTarget as HTMLElement).style.transform = 'translateX(0)';
     }
 
     return createPortal(
@@ -70,7 +73,7 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({ isOpen, onClose, anchorRect
                         }}
                         onMouseDown={(e) => e.stopPropagation()}
                     >
-                        <div style={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-tertiary)', padding: '8px 12px', letterSpacing: '0.1em' }}>Configuration</div>
+                        <div style={{ fontSize: '11px', textTransform: 'uppercase', fontWeight: 700, color: 'var(--accent-color)', padding: '10px 14px', letterSpacing: '0.12em', opacity: 0.9 }}>Configuration</div>
 
                         <button
                             onClick={() => { onOpenConfig(); onClose(); }}
@@ -83,20 +86,20 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({ isOpen, onClose, anchorRect
                         </button>
 
 
-                        <div style={{ height: '1px', backgroundColor: 'rgba(255,255,255,0.05)', margin: '4px 0' }} />
-                        <div style={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-tertiary)', padding: '8px 12px', letterSpacing: '0.1em' }}>System</div>
+                        <div style={{ height: '1px', backgroundColor: 'var(--border-color)', margin: '6px 4px' }} />
+                        <div style={{ fontSize: '11px', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-secondary)', padding: '10px 14px', letterSpacing: '0.12em' }}>System</div>
 
                         <button style={{ ...itemStyle, opacity: 0.5, cursor: 'not-allowed' }}>
-                            <Layout size={16} />
+                            <Layout size={16} color="var(--text-secondary)" />
                             <span>UI Preferences</span>
                         </button>
 
                         <button style={{ ...itemStyle, opacity: 0.5, cursor: 'not-allowed' }}>
-                            <Share2 size={16} />
+                            <Share2 size={16} color="var(--text-secondary)" />
                             <span>Sync Settings</span>
                         </button>
 
-                        <div style={{ height: '1px', backgroundColor: 'rgba(255,255,255,0.05)', margin: '4px 0' }} />
+                        <div style={{ height: '1px', backgroundColor: 'var(--border-color)', margin: '6px 4px' }} />
 
                         <button
                             style={itemStyle}

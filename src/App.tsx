@@ -543,8 +543,12 @@ function App() {
     }
   }
 
+  useEffect(() => {
+    document.body.className = `theme-${config.settings.theme}`
+  }, [config.settings.theme])
+
   return (
-    <div className={`app-container theme-${config.settings.theme}`}>
+    <div className="app-container">
       {isLoading && (
         <div className="loading-bar-container">
           <div className="loading-bar-progress" />
