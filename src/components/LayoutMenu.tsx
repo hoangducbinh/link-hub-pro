@@ -1,6 +1,6 @@
 import React from 'react'
 import { motion } from 'framer-motion'
-import { Layout, Columns, Rows, LayoutGrid } from 'lucide-react'
+import { Layout, Columns, Rows, LayoutGrid, Maximize2 } from 'lucide-react'
 
 interface LayoutMenuProps {
     isOpen: boolean
@@ -8,9 +8,10 @@ interface LayoutMenuProps {
     anchorRect: DOMRect | null
     currentLayout: string
     onSetLayout: (layout: string) => void
+    onFloatCurrent: () => void
 }
 
-const LayoutMenu: React.FC<LayoutMenuProps> = ({ isOpen, onClose, anchorRect, currentLayout, onSetLayout }) => {
+const LayoutMenu: React.FC<LayoutMenuProps> = ({ isOpen, onClose, anchorRect, currentLayout, onSetLayout, onFloatCurrent }) => {
     if (!isOpen || !anchorRect) return null
 
     const itemStyle: React.CSSProperties = {
@@ -110,6 +111,22 @@ const LayoutMenu: React.FC<LayoutMenuProps> = ({ isOpen, onClose, anchorRect, cu
                 >
                     <Rows size={16} />
                     <span>Split Vertical</span>
+                </button>
+
+                <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', margin: '4px 0' }} />
+
+                <button
+                    onClick={() => {
+                        onFloatCurrent();
+                        onClose();
+                    }}
+                    style={itemStyle}
+                    onMouseEnter={hoverStyle}
+                    onMouseLeave={leaveStyle}
+                >
+                    <Maximize2 size={16} style={{ transform: 'rotate(180deg)' }} />
+                    {/* Using inverted max/min or specialized icon like PictureInPicture */}
+                    <span>Float Current Tab</span>
                 </button>
 
                 <button

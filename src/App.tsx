@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import Launcher from './components/Launcher'
-import WebViewManager, { WebViewInfo } from './components/WebViewManager'
+import WebViewManager, { WebViewInfo, FloatingState } from './components/WebViewManager'
 import TitleBar from './components/TitleBar'
 import MissionControl from './components/MissionControl'
 import SettingsModal from './components/SettingsModal'
@@ -105,6 +105,50 @@ function App() {
   const [isLoading, setIsLoading] = useState(false)
   const [downloads, setDownloads] = useState<DownloadItem[]>([])
   const [isDownloadManagerOpen, setIsDownloadManagerOpen] = useState(false)
+  const [activeFloating, setActiveFloating] = useState<FloatingState | null>(null)
+
+  const toggleFloating = (instanceId: string) => {
+    setActiveFloating(prev => {
+      if (prev && prev.instanceId === instanceId) {
+        // Restore to grid (dock)
+        // Ensure it's active in the grid if not already
+        if (!activeIds.includes(instanceId)) {
+          setActiveIds(ids => [instanceId, ...ids].slice(0, layout === 'single' ? 1 : 2))
+        }
+        return null
+      } else {
+        // float this tab
+        // Remove from current grid activeIds calculation so it doesn't duplicate in split view?
+        // Actually, we should probably keep it 'active' but the WebViewManager will handle the visual movement.
+        // But for split view logic (index 0, 1), we might want to shift others up.
+
+        // Let's remove it from activeIds so the grid reflows to show other tabs or becomes empty/single?
+        // If we remove it from activeIds, WebViewManager might hide it if relying solely on activeIds.
+        // We need to ensure WebViewManager treats it as "active" even if not in activeIds grid list, 
+        // OR we keep it in activeIds and filter it out of grid rendering.
+
+        // Implementation approach: Keep it in activeWebViews. Remove from activeIds (which drives the grid).
+        // But WebViewManager needs to know about it.
+        // We will pass 'activeFloating' to WebViewManager.
+
+        setActiveIds(ids => ids.filter(id => id !== instanceId))
+
+        return {
+          instanceId,
+          rect: { x: window.innerWidth - 420, y: 80, width: 400, height: 300 }, // Default position
+          isCollapsed: false
+        }
+      }
+    })
+  }
+
+  const updateFloatingRect = (rect: Partial<FloatingState['rect']>) => {
+    setActiveFloating(prev => prev ? { ...prev, rect: { ...prev.rect, ...rect } } : null)
+  }
+
+  const toggleFloatingCollapse = () => {
+    setActiveFloating(prev => prev ? { ...prev, isCollapsed: !prev.isCollapsed } : null)
+  }
 
   // Load configuration on mount
   useEffect(() => {
@@ -508,6 +552,10 @@ function App() {
             wv.instanceId === activeId ? { ...wv, isLocked: true } : wv
           ))
         }}
+        onFloatCurrentTab={() => {
+          const activeId = activeIds[0]
+          if (activeId) toggleFloating(activeId)
+        }}
       />
 
       <div className="main-content">
@@ -525,6 +573,10 @@ function App() {
           }}
           splitRatio={splitRatio}
           onResizeSplit={setSplitRatio}
+          activeFloating={activeFloating}
+          onToggleFloating={toggleFloating}
+          onUpdateFloatingRect={updateFloatingRect}
+          onToggleFloatingCollapse={toggleFloatingCollapse}
         />
 
         <Launcher
