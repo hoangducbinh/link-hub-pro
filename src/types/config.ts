@@ -5,7 +5,7 @@ export interface WebsiteConfig {
     icon?: string
     group?: string
     requirePassword?: boolean
-    sessionType?: 'shared' | 'isolated'
+    sessionType?: 'shared' | 'isolated' | 'grouped'
 }
 
 export interface AppConfig {

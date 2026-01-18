@@ -5,6 +5,7 @@ import TitleBar from './components/TitleBar'
 import MissionControl from './components/MissionControl'
 import SettingsModal from './components/SettingsModal'
 import SettingsMenu from './components/SettingsMenu'
+import DownloadManager, { DownloadItem } from './components/DownloadManager'
 import './App.css'
 
 import { getFavicon } from './utils/favicon'
@@ -39,6 +40,8 @@ function App() {
   const [currentUrl, setCurrentUrl] = useState('')
   const [screenshots, setScreenshots] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
+  const [downloads, setDownloads] = useState<DownloadItem[]>([])
+  const [isDownloadManagerOpen, setIsDownloadManagerOpen] = useState(false)
 
   // Load configuration on mount
   useEffect(() => {
@@ -46,14 +49,15 @@ function App() {
       try {
         const configs = await (window as any).electronAPI.loadConfigs()
         if (configs && configs.length > 0) {
-          // Use the first one (usually default.json)
           setConfig(configs[0].data)
         } else {
-          // Save initial config if none exists
           await (window as any).electronAPI.saveConfig({ name: 'default.json', data: INITIAL_CONFIG })
         }
+
+        const history = await (window as any).electronAPI.getDownloadHistory()
+        if (history) setDownloads(history)
       } catch (e) {
-        console.error('Failed to load configs:', e)
+        console.error('Failed to load initial data:', e)
       }
     }
     loadData()
@@ -70,7 +74,9 @@ function App() {
         url: firstApp.url,
         name: firstApp.name,
         icon: firstApp.icon,
-        partition: firstApp.sessionType === 'isolated' ? `persist:${firstApp.id}` : 'persist:main'
+        partition: firstApp.sessionType === 'isolated' ? `persist:iso-${defaultId}` :
+          firstApp.sessionType === 'grouped' ? `persist:grp-${firstApp.group || 'default'}` :
+            'persist:main'
       }])
       setActiveIds([defaultId])
     }
@@ -157,7 +163,9 @@ function App() {
         appId: firstApp.id,
         url: firstApp.url,
         name: firstApp.name,
-        partition: firstApp.sessionType === 'isolated' ? `persist:${firstApp.id}` : 'persist:main'
+        partition: firstApp.sessionType === 'isolated' ? `persist:iso-${defaultId}` :
+          firstApp.sessionType === 'grouped' ? `persist:grp-${firstApp.group || 'default'}` :
+            'persist:main'
       }])
       setActiveIds([defaultId])
       setIsMissionControlOpen(false)
@@ -174,12 +182,15 @@ function App() {
     }
 
     if (!instanceToFocus) {
+      const instanceId = `inst-${app.id}-${Date.now()}`
       const newInstance: WebViewInfo = {
-        instanceId: `inst-${app.id}-${Date.now()}`,
+        instanceId,
         appId: app.id,
         url: app.url,
         name: app.name,
-        partition: (app as WebsiteConfig).sessionType === 'isolated' ? `persist:${app.id}` : 'persist:main'
+        partition: (app as WebsiteConfig).sessionType === 'isolated' ? `persist:iso-${instanceId}` :
+          (app as WebsiteConfig).sessionType === 'grouped' ? `persist:grp-${(app as WebsiteConfig).group || 'default'}` :
+            'persist:main'
       }
       if (activeIds.length > 0) {
         activeIds.forEach(id => captureSnapshot(id))
@@ -246,6 +257,32 @@ function App() {
     return () => clearInterval(timer)
   }, [activeIds, isMissionControlOpen])
 
+  // Download listeners
+  useEffect(() => {
+    const api = (window as any).electronAPI
+    if (!api) return
+
+    api.onDownloadStart((item: DownloadItem) => {
+      setDownloads(prev => {
+        if (prev.some(dl => dl.id === item.id)) return prev
+        return [...prev, { ...item, fileExists: true }]
+      })
+      setIsDownloadManagerOpen(true)
+    })
+
+    api.onDownloadProgress((data: { id: string, receivedBytes: number }) => {
+      setDownloads(prev => prev.map(dl =>
+        dl.id === data.id ? { ...dl, receivedBytes: data.receivedBytes } : dl
+      ))
+    })
+
+    api.onDownloadState((data: { id: string, state: DownloadItem['state'], path?: string }) => {
+      setDownloads(prev => prev.map(dl =>
+        dl.id === data.id ? { ...dl, state: data.state, path: data.path || dl.path, fileExists: true } : dl
+      ))
+    })
+  }, [])
+
   const handleSaveConfig = async (newConfig: AppConfig) => {
     setConfig(newConfig)
     await (window as any).electronAPI.saveConfig({ name: 'default.json', data: newConfig })
@@ -260,6 +297,20 @@ function App() {
 
   const handleExportConfig = async () => {
     await (window as any).electronAPI.exportConfig({ data: config, defaultName: 'linkhub-config.json' })
+  }
+
+  const handleRemoveDownloadItem = async (id: string) => {
+    const success = await (window as any).electronAPI.removeDownloadItem(id)
+    if (success) {
+      setDownloads(prev => prev.filter(dl => dl.id !== id))
+    }
+  }
+
+  const handleClearDownloadHistory = async () => {
+    const remaining = await (window as any).electronAPI.clearDownloadHistory()
+    if (remaining) {
+      setDownloads(remaining)
+    }
   }
 
   return (
@@ -281,6 +332,13 @@ function App() {
         onToggleMissionControl={() => setIsMissionControlOpen(!isMissionControlOpen)}
         onSetLayout={(l: string) => setLayout(l)}
         onOpenSettingsMenu={(rect) => setSettingsMenuRect(rect)}
+        onToggleDownloads={async () => {
+          if (!isDownloadManagerOpen) {
+            const history = await (window as any).electronAPI.getDownloadHistory()
+            if (history) setDownloads(history)
+          }
+          setIsDownloadManagerOpen(!isDownloadManagerOpen)
+        }}
         currentLayout={layout}
         currentUrl={currentUrl}
         onNavigate={handleNavigate}
@@ -316,6 +374,16 @@ function App() {
           onSave={handleSaveConfig}
           onImport={handleImportConfig}
           onExport={handleExportConfig}
+        />
+
+        <DownloadManager
+          isOpen={isDownloadManagerOpen}
+          onClose={() => {
+            setIsDownloadManagerOpen(false)
+          }}
+          downloads={downloads}
+          onRemoveItem={handleRemoveDownloadItem}
+          onClearHistory={handleClearDownloadHistory}
         />
 
         <SettingsMenu

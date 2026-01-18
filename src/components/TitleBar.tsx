@@ -11,7 +11,8 @@ import {
     Maximize2,
     Square,
     Layout,
-    Settings
+    Settings,
+    Download
 } from 'lucide-react'
 
 interface TitleBarProps {
@@ -22,6 +23,7 @@ interface TitleBarProps {
     onToggleMissionControl: () => void
     onSetLayout: (layout: string) => void
     onOpenSettingsMenu: (rect: DOMRect) => void
+    onToggleDownloads: () => void
     currentLayout: string
     currentUrl: string
     onNavigate: (url: string) => void
@@ -35,6 +37,7 @@ const TitleBar: React.FC<TitleBarProps> = ({
     onToggleMissionControl,
     onSetLayout,
     onOpenSettingsMenu,
+    onToggleDownloads,
     currentLayout,
     currentUrl,
     onNavigate,
@@ -151,6 +154,14 @@ const TitleBar: React.FC<TitleBarProps> = ({
                     title="Split Vertical"
                 >
                     <Rows size={15} strokeWidth={1.5} />
+                </button>
+
+                <button
+                    className="tool-btn"
+                    onClick={onToggleDownloads}
+                    title="Downloads"
+                >
+                    <Download size={18} strokeWidth={1.5} />
                 </button>
 
                 <div style={{ width: '1px', height: '18px', backgroundColor: 'var(--border-color)', margin: 'auto 4px' }} />

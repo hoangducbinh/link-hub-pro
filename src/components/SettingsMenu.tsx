@@ -58,6 +58,7 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({ isOpen, onClose, anchorRect
                     borderRadius: '12px',
                     boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
                     padding: '6px',
+                    marginLeft: '-25px',
                     color: 'white'
                 }}
                 onClick={(e) => e.stopPropagation()}

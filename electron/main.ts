@@ -167,9 +167,143 @@ ipcMain.handle('config:pick-icon', async () => {
   return null
 })
 
+// Download Management
+interface DownloadItem {
+  id: string
+  name: string
+  url: string
+  totalBytes: number
+  receivedBytes: number
+  state: 'downloading' | 'completed' | 'failed' | 'cancelled'
+  path: string
+  startTime: number
+  fileExists?: boolean
+}
+
+const DOWNLOADS_FILE = path.join(USER_DATA_PATH, 'downloads.json')
+let downloads: Record<string, DownloadItem> = {}
+
+if (fs.existsSync(DOWNLOADS_FILE)) {
+  try {
+    downloads = JSON.parse(fs.readFileSync(DOWNLOADS_FILE, 'utf8'))
+  } catch (e) {
+    console.error('Failed to load downloads:', e)
+  }
+}
+
+function saveDownloads() {
+  fs.writeFileSync(DOWNLOADS_FILE, JSON.stringify(downloads, null, 2), 'utf8')
+}
+
+const DOWNLOAD_HANDLERS_SET = new WeakSet()
+let downloadCounter = 0
+
+function setupDownloadHandler(session: any) {
+  if (DOWNLOAD_HANDLERS_SET.has(session)) return
+  DOWNLOAD_HANDLERS_SET.add(session)
+
+  session.on('will-download', (_event: any, item: any, _webContents: any) => {
+    // Generate a unique ID
+    const id = `dl-${Date.now()}-${++downloadCounter}`
+
+    // Set default save path to Downloads folder
+    const downloadsPath = app.getPath('downloads')
+    const fileName = item.getFilename()
+    const savePath = path.join(downloadsPath, fileName)
+
+    // Handle file name collisions (e.g., file (1).zip)
+    let finalPath = savePath
+    let counter = 1
+    while (fs.existsSync(finalPath)) {
+      const ext = path.extname(fileName)
+      const base = path.basename(fileName, ext)
+      finalPath = path.join(downloadsPath, `${base} (${counter})${ext}`)
+      counter++
+    }
+
+    item.setSavePath(finalPath)
+
+    const url = item.getURL()
+    const totalBytes = item.getTotalBytes()
+
+    downloads[id] = {
+      id,
+      name: path.basename(finalPath),
+      url,
+      totalBytes,
+      receivedBytes: 0,
+      state: 'downloading',
+      path: finalPath,
+      startTime: Date.now(),
+      fileExists: true
+    }
+
+    mainWindow?.webContents.send('download:start', downloads[id])
+
+    item.on('updated', (_event: any, state: string) => {
+      if (state === 'progressing') {
+        downloads[id].receivedBytes = item.getReceivedBytes()
+        mainWindow?.webContents.send('download:progress', { id, receivedBytes: downloads[id].receivedBytes })
+      } else if (state === 'interrupted') {
+        downloads[id].state = 'failed'
+        mainWindow?.webContents.send('download:state', { id, state: 'failed' })
+        saveDownloads()
+      }
+    })
+
+    item.once('done', (_event: any, state: string) => {
+      downloads[id].state = state === 'completed' ? 'completed' : state === 'cancelled' ? 'cancelled' : 'failed'
+      downloads[id].path = item.getSavePath()
+      mainWindow?.webContents.send('download:state', { id, state: downloads[id].state, path: downloads[id].path })
+      saveDownloads()
+    })
+  })
+}
+
+// Hook into all sessions (including partitions)
+app.on('session-created', (session) => {
+  setupDownloadHandler(session)
+})
+
+ipcMain.handle('download:get-history', () => {
+  return Object.values(downloads).map(dl => ({
+    ...dl,
+    fileExists: dl.path ? fs.existsSync(dl.path) : false
+  }))
+})
+ipcMain.handle('download:open-file', (_, filePath) => {
+  if (fs.existsSync(filePath)) {
+    import('electron').then(({ shell }) => shell.openPath(filePath))
+  }
+})
+ipcMain.handle('download:open-folder', (_, filePath) => {
+  if (fs.existsSync(filePath)) {
+    import('electron').then(({ shell }) => shell.showItemInFolder(filePath))
+  }
+})
+ipcMain.handle('download:remove-item', (_, id) => {
+  if (downloads[id]) {
+    delete downloads[id]
+    saveDownloads()
+    return true
+  }
+  return false
+})
+ipcMain.handle('download:clear-history', () => {
+  // Only clear completed/failed/cancelled downloads
+  Object.keys(downloads).forEach(id => {
+    if (downloads[id].state !== 'downloading') {
+      delete downloads[id]
+    }
+  })
+  saveDownloads()
+  return Object.values(downloads)
+})
+
 app.on('web-contents-created', (_, contents) => {
   if (contents.getType() === 'webview') {
     contents.setWindowOpenHandler(({ url }) => {
+      // ... existing auth hosts logic ...
       const allowedHosts = [
         'accounts.google.com',
         'github.com/login',

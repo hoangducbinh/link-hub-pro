@@ -309,6 +309,15 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, config, 
                                                     cursor: 'pointer'
                                                 }}
                                             >Isolated</button>
+                                            <button
+                                                onClick={() => setEditingSite(prev => prev ? { ...prev, sessionType: 'grouped' } : null)}
+                                                style={{
+                                                    flex: 1, padding: '6px', fontSize: '11px', border: 'none', borderRadius: '6px',
+                                                    backgroundColor: editingSite.sessionType === 'grouped' ? 'rgba(255,255,255,0.1)' : 'transparent',
+                                                    color: editingSite.sessionType === 'grouped' ? 'white' : 'rgba(255,255,255,0.4)',
+                                                    cursor: 'pointer'
+                                                }}
+                                            >Grouped</button>
                                         </div>
                                     </div>
 
