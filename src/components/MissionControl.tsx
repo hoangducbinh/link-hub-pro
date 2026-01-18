@@ -20,6 +20,19 @@ const MissionControl: React.FC<MissionControlProps> = ({
     onSelect,
     onCloseWebView
 }) => {
+    // Dynamic grid calculation
+    const count = webViews.length
+    let cols = 1
+    if (count > 1) cols = 2
+    if (count > 4) cols = 3
+    if (count > 9) cols = 4
+    if (count > 16) cols = 5
+
+    // Calculate item height based exclusively on available vertical space
+    // We roughly estimate header + margins takes ~150px
+    // But we want it to fit in "70vh" or similar.
+    // If we have many items, the grid simply scales down.
+
     return (
         <div className={`mission-control-overlay ${isOpen ? 'open' : ''}`}>
             {/* Background overlay for clicks */}
@@ -34,9 +47,9 @@ const MissionControl: React.FC<MissionControlProps> = ({
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 20 }}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 1.05 }}
                         className="mission-control-content"
                         style={{
                             position: 'relative',
@@ -45,25 +58,28 @@ const MissionControl: React.FC<MissionControlProps> = ({
                             alignItems: 'center',
                             justifyContent: 'center',
                             width: '100%',
-                            maxWidth: '1200px',
-                            zIndex: 1
+                            height: '100%',
+                            zIndex: 1,
+                            pointerEvents: 'none' // Let clicks pass through empty areas
                         }}
                     >
-                        <div style={{ marginBottom: '40px', textAlign: 'center' }}>
-                            <h2 style={{ fontSize: '24px', fontWeight: 600, color: 'white', margin: 0 }}>Mission Control</h2>
-                            <p style={{ color: 'rgba(255, 255, 255, 0.5)', marginTop: '8px' }}>Manage your active sessions</p>
+                        <div style={{ marginBottom: '20px', textAlign: 'center', pointerEvents: 'auto' }}>
+                            <h2 style={{ fontSize: '24px', fontWeight: 600, color: 'white', margin: 0, letterSpacing: '-0.5px' }}>Mission Control</h2>
                         </div>
 
                         <div
-                            className="mission-control-grid"
                             style={{
                                 display: 'grid',
-                                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                                gap: '24px',
-                                width: '100%',
-                                maxHeight: '70vh',
-                                overflowY: 'auto',
-                                padding: '10px',
+                                gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+                                gap: '20px',
+                                width: '90%',
+                                maxWidth: '1400px',
+                                maxHeight: '80vh',
+                                padding: '20px',
+                                pointerEvents: 'auto',
+                                boxSizing: 'border-box',
+                                alignContent: 'center',
+                                justifyItems: 'center',
                             }}
                         >
                             {webViews.length === 0 ? (
@@ -74,7 +90,12 @@ const MissionControl: React.FC<MissionControlProps> = ({
                                 webViews.map((wv) => (
                                     <motion.div
                                         key={wv.instanceId}
-                                        whileHover={{ y: -5, scale: 1.02 }}
+                                        layoutId={wv.instanceId}
+                                        whileHover={{
+                                            scale: 1.05,
+                                            zIndex: 10,
+                                            boxShadow: '0 0 0 2px rgba(59, 130, 246, 0.8), 0 20px 40px rgba(0,0,0,0.4)', // Blue border glow + shadow
+                                        }}
                                         onClick={(e) => {
                                             e.stopPropagation()
                                             onSelect(wv.instanceId)
@@ -85,46 +106,44 @@ const MissionControl: React.FC<MissionControlProps> = ({
                                             onCloseWebView(wv.instanceId)
                                         }}
                                         style={{
-                                            backgroundColor: 'rgba(30, 30, 30, 0.6)',
-                                            borderRadius: '16px',
-                                            padding: '0',
+                                            backgroundColor: 'rgba(30, 30, 30, 0.4)',
+                                            borderRadius: '12px',
                                             cursor: 'pointer',
                                             border: '1px solid rgba(255, 255, 255, 0.1)',
                                             position: 'relative',
                                             display: 'flex',
                                             flexDirection: 'column',
-                                            gap: '0',
-                                            backdropFilter: 'blur(20px)',
-                                            boxShadow: '0 4px 24px rgba(0,0,0,0.2)',
+                                            backdropFilter: 'blur(30px)',
+                                            boxShadow: '0 4px 24px rgba(0,0,0,0.1)',
                                             overflow: 'hidden',
-                                            transition: 'transform 0.2s',
-                                            height: '240px'
+                                            width: '100%',
+                                            aspectRatio: '16/10',
                                         }}
                                     >
                                         {/* Header */}
                                         <div style={{
-                                            padding: '12px 16px',
+                                            padding: '10px 14px',
                                             display: 'flex',
                                             alignItems: 'center',
-                                            gap: '12px',
-                                            borderBottom: '1px solid rgba(255,255,255,0.05)',
+                                            gap: '10px',
+                                            borderBottom: '1px solid rgba(255,255,255,0.03)',
                                             backgroundColor: 'rgba(255,255,255,0.02)'
                                         }}>
                                             <div style={{
-                                                width: '24px',
-                                                height: '24px',
-                                                borderRadius: '6px',
+                                                width: '20px',
+                                                height: '20px',
+                                                borderRadius: '5px',
                                                 backgroundColor: 'rgba(255, 255, 255, 0.1)',
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
                                                 flexShrink: 0
                                             }}>
-                                                <Globe size={14} color="rgba(255,255,255,0.8)" />
+                                                <Globe size={12} color="rgba(255,255,255,0.8)" />
                                             </div>
                                             <div style={{ flex: 1, overflow: 'hidden' }}>
                                                 <div style={{
-                                                    fontSize: '13px',
+                                                    fontSize: '12px',
                                                     fontWeight: 500,
                                                     color: 'rgba(255,255,255,0.9)',
                                                     whiteSpace: 'nowrap',
@@ -166,24 +185,12 @@ const MissionControl: React.FC<MissionControlProps> = ({
                                                     gap: '12px',
                                                     backgroundColor: 'rgba(255,255,255,0.02)'
                                                 }}>
-                                                    <div style={{
-                                                        width: '48px',
-                                                        height: '48px',
-                                                        borderRadius: '12px',
-                                                        backgroundColor: 'rgba(255,255,255,0.05)',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center'
-                                                    }}>
-                                                        <Globe size={24} color="rgba(255,255,255,0.2)" />
-                                                    </div>
-                                                    <span style={{ fontSize: '12px', color: 'rgba(129, 205, 243, 0.2)' }}>Chưa chụp kịp, lướt chậm thôi!</span>
+                                                    <Globe size={32} color="rgba(255,255,255,0.1)" />
                                                 </div>
                                             )}
                                         </div>
-
-
                                     </motion.div>
+
                                 ))
                             )}
                         </div>
@@ -199,6 +206,7 @@ const MissionControl: React.FC<MissionControlProps> = ({
                                 color: 'white',
                                 cursor: 'pointer',
                                 opacity: 0.5,
+                                pointerEvents: 'auto'
                             }}
                         >
                             <X size={32} />

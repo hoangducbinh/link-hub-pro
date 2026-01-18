@@ -33,11 +33,14 @@ function App() {
   const [currentUrl, setCurrentUrl] = useState('')
   const [screenshots, setScreenshots] = useState<Record<string, string>>({})
 
+  const [isLoading, setIsLoading] = useState(false)
+
   // Sync URL from primary active webview
   useEffect(() => {
     const activeId = activeIds[0]
     if (!activeId) {
       setCurrentUrl('')
+      setIsLoading(false)
       return
     }
 
@@ -58,12 +61,34 @@ function App() {
       }
     }
 
+    const handleStartLoading = () => setIsLoading(true)
+    const handleStopLoading = () => setIsLoading(false)
+
+    // Initial check
+    // Initial check - wrap in timeout to ensure webview is ready
+    setTimeout(() => {
+      try {
+        if (webviewEl.isLoading?.()) {
+          setIsLoading(true)
+        } else {
+          setIsLoading(false)
+        }
+      } catch (e) {
+        // Ignore errors if webview is not ready
+      }
+    }, 100)
+
+
     webviewEl.addEventListener('did-navigate', updateUrl)
     webviewEl.addEventListener('did-navigate-in-page', updateUrl)
+    webviewEl.addEventListener('did-start-loading', handleStartLoading)
+    webviewEl.addEventListener('did-stop-loading', handleStopLoading)
 
     return () => {
       webviewEl.removeEventListener('did-navigate', updateUrl)
       webviewEl.removeEventListener('did-navigate-in-page', updateUrl)
+      webviewEl.removeEventListener('did-start-loading', handleStartLoading)
+      webviewEl.removeEventListener('did-stop-loading', handleStopLoading)
     }
   }, [activeIds[0], activeWebViews.length]) // Re-run when primary shift or lists changes
 
@@ -226,6 +251,13 @@ function App() {
 
   return (
     <div className="app-container">
+      {/* System Loading Bar */}
+      {isLoading && (
+        <div className="loading-bar-container">
+          <div className="loading-bar-progress" />
+        </div>
+      )}
+
       <TitleBar
         onBack={() => handleBrowserAction('back')}
         onForward={() => handleBrowserAction('forward')}
