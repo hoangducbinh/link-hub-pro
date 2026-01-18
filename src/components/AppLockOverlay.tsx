@@ -57,7 +57,7 @@ const AppLockOverlay: React.FC<AppLockOverlayProps> = ({ onUnlock, hash, recover
                 left: 0,
                 right: 0,
                 bottom: 0,
-                backgroundColor: 'rgba(0, 0, 0, 0.95)', // High opacity to hide content without blur
+                backgroundColor: 'rgba(0, 0, 0, 1)',
                 zIndex: 9999,
                 display: 'flex',
                 alignItems: 'center',
