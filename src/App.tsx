@@ -505,6 +505,25 @@ function App() {
           break
         }
       }
+
+      // DevTools Shortcuts (Hardcoded for parody)
+      const isDevTools =
+        e.key === 'F12' ||
+        ((e.metaKey || e.ctrlKey) && (e.altKey || e.shiftKey) && e.key.toLowerCase() === 'i');
+
+      if (isDevTools) {
+        const activeId = activeIds[0]
+        if (activeId) {
+          const wv = document.getElementById(`webview-${activeId}`) as any
+          if (wv) {
+            if (wv.isDevToolsOpened()) {
+              wv.closeDevTools()
+            } else {
+              wv.openDevTools()
+            }
+          }
+        }
+      }
     }
 
     window.addEventListener('keydown', handleKeyDown)
@@ -642,6 +661,8 @@ function App() {
           }}
           splitRatio={splitRatio}
           onResizeSplit={setSplitRatio}
+          viewMode={viewMode}
+          onSetViewMode={setViewMode}
         />
 
         <Launcher

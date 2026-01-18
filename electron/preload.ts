@@ -9,6 +9,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('open-devtools', listener)
     return () => ipcRenderer.removeListener('open-devtools', listener)
   },
+  onInspectElementAt: (callback: (data: { instanceId: string, x: number, y: number }) => void) => {
+    const listener = (_event: any, data: any) => callback(data)
+    ipcRenderer.on('inspect-element-at', listener)
+    return () => ipcRenderer.removeListener('inspect-element-at', listener)
+  },
   onToggleLauncher: (callback: () => void) => {
     const listener = () => callback()
     ipcRenderer.on('toggle-launcher', listener)

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, globalShortcut, ipcMain, dialog, Menu } from 'electron'
+import { app, BrowserWindow, globalShortcut, ipcMain, dialog, webContents } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import fs from 'node:fs'
@@ -76,23 +76,14 @@ ipcMain.on('window-minimize', () => {
 })
 
 // Context Menu IPC
+import { buildContextMenu } from './context-menu'
+
+// Context Menu IPC
 ipcMain.on('show-context-menu', (event, params) => {
-  const { x, y, instanceId } = params
-  const template = [
-    { role: 'cut' },
-    { role: 'copy' },
-    { role: 'paste' },
-    { type: 'separator' },
-    {
-      label: 'Inspect Element',
-      click: () => {
-        event.reply('open-devtools', { instanceId })
-      }
-    }
-  ]
-  const menu = Menu.buildFromTemplate(template as any)
-  const win = BrowserWindow.fromWebContents(event.sender) || mainWindow
-  menu.popup({ window: win!, x, y })
+  const webContents = event.sender
+  const menu = buildContextMenu(params, webContents)
+  const win = BrowserWindow.fromWebContents(webContents) || mainWindow
+  menu.popup({ window: win!, x: params.x, y: params.y })
 })
 
 ipcMain.on('show-download-menu', (event, item) => {
@@ -237,6 +228,31 @@ ipcMain.handle('security:verify-password', (_, { password, hash }) => {
 
 ipcMain.on('shortcuts:unregister-all', () => {
   globalShortcut.unregisterAll()
+})
+
+// Device Emulation IPC
+ipcMain.on('emulation:enable', (_, { params }) => {
+  // If instanceId is provided, find that specific webContents
+  // But usually the sender is the *host* page (renderer), not the webview itself.
+  // We need to find the webContents of the webview with that instanceId.
+  // The webview contents are not children of the renderer in a way that we can just query by ID from here easily without tracking.
+  // However, we can use `webContents.fromId(id)` if we knew the ID. 
+  // BUT, the renderer can access `<webview>.getWebContentsId()`.
+  // So the renderer should pass the `webContentsId` of the webview.
+
+  // params expected: { webContentsId: number, emulationParams: ... }
+  const targetId = params.webContentsId
+  const targetContents = webContents.fromId(targetId)
+  if (targetContents) {
+    targetContents.enableDeviceEmulation(params.emulationParams)
+  }
+})
+
+ipcMain.on('emulation:disable', (_, { webContentsId }) => {
+  const targetContents = webContents.fromId(webContentsId)
+  if (targetContents) {
+    targetContents.disableDeviceEmulation()
+  }
 })
 
 // Download Management
