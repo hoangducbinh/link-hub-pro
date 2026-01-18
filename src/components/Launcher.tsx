@@ -74,9 +74,9 @@ const Launcher: React.FC<LauncherProps> = ({ isOpen, onClose, onSelect, apps }) 
                         exit={{ opacity: 0, scale: 0.9, y: 10 }}
                         transition={{
                             type: 'spring',
-                            stiffness: 260,
-                            damping: 26,
-                            mass: 1
+                            stiffness: 400,
+                            damping: 30,
+                            mass: 0.8
                         }}
                         className="launcher-content"
                         style={{

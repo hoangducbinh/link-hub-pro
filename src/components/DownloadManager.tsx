@@ -50,27 +50,29 @@ const DownloadManager: React.FC<DownloadManagerProps> = ({ isOpen, onClose, down
                         alignItems: 'flex-end',
                         justifyContent: 'flex-end',
                         padding: '24px',
-                        pointerEvents: 'none'
+                        backgroundColor: 'rgba(0,0,0,0.1)'
                     }}
+                    onClick={onClose}
                 >
                     <motion.div
-                        initial={{ opacity: 0, y: 30, scale: 0.9, filter: 'blur(10px)' }}
-                        animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
-                        exit={{ opacity: 0, y: 30, scale: 0.9, filter: 'blur(10px)' }}
-                        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                        transition={{ type: 'spring', damping: 25, stiffness: 400 }}
                         style={{
                             width: '400px',
                             maxHeight: '520px',
-                            backgroundColor: 'rgba(26, 26, 26, 0.85)',
-                            backdropFilter: 'blur(20px) saturate(180%)',
-                            border: '1px solid rgba(255, 255, 255, 0.15)',
-                            borderRadius: '24px',
-                            boxShadow: '0 30px 60px -12px rgba(0, 0, 0, 0.6)',
+                            backgroundColor: 'rgba(18, 18, 18, 0.85)',
+                            backdropFilter: 'blur(var(--blur-heavy)) saturate(180%)',
+                            border: '1px solid var(--border-bright)',
+                            borderRadius: '20px',
+                            boxShadow: 'var(--shadow-premium)',
                             display: 'flex',
                             flexDirection: 'column',
                             pointerEvents: 'auto',
                             overflow: 'hidden'
                         }}
+                        onClick={(e) => e.stopPropagation()}
                     >
                         {/* Header */}
                         <div style={{

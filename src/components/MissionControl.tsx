@@ -47,9 +47,9 @@ const MissionControl: React.FC<MissionControlProps> = ({
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 1.05 }}
+                        transition={{ type: 'spring', damping: 30, stiffness: 450, mass: 0.8 }}
                         className="mission-control-content"
                         style={{
                             position: 'relative',
@@ -92,9 +92,9 @@ const MissionControl: React.FC<MissionControlProps> = ({
                                         <motion.div
                                             key={wv.instanceId}
                                             layout
-                                            initial={{ opacity: 0, scale: 0.8 }}
                                             animate={{ opacity: 1, scale: 1 }}
-                                            exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
+                                            exit={{ opacity: 0, scale: 0.5 }}
+                                            transition={{ type: 'spring', damping: 25, stiffness: 400 }}
                                             whileHover={{
                                                 scale: 1.03,
                                                 zIndex: 10,

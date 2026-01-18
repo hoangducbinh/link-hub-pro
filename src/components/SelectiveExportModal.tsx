@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { X, Check, Globe, Download } from 'lucide-react'
 import { WebsiteConfig } from '../types/Config'
 
@@ -25,100 +25,114 @@ const SelectiveExportModal: React.FC<SelectiveExportModalProps> = ({ isOpen, onC
     if (!isOpen) return null
 
     return (
-        <div className="settings-modal-overlay" style={{ zIndex: 10001 }} onClick={onClose}>
-            <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                className="settings-modal"
-                style={{ width: '480px', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}
-                onClick={e => e.stopPropagation()}
-            >
-                <div className="settings-header" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <h2 style={{ fontSize: '18px', margin: 0 }}>Selective Export</h2>
-                    </div>
-                    <button onClick={onClose} className="btn-icon">
-                        <X size={20} />
-                    </button>
-                </div>
-
-                <div style={{ padding: '20px', overflowY: 'auto', flex: 1 }}>
-                    <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '12px', opacity: 0.5 }}>Select items to include in export file</span>
-                        <div style={{ display: 'flex', gap: '12px' }}>
-                            <button onClick={selectAll} style={{ background: 'none', border: 'none', color: '#3b82f6', fontSize: '12px', cursor: 'pointer' }}>All</button>
-                            <button onClick={selectNone} style={{ background: 'none', border: 'none', color: '#3b82f6', fontSize: '12px', cursor: 'pointer' }}>None</button>
+        <AnimatePresence>
+            {isOpen && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ type: 'spring', damping: 25, stiffness: 400 }}
+                    className="modal-overlay"
+                    style={{ zIndex: 10005, display: 'flex' }}
+                    onClick={onClose}
+                >
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                        transition={{ type: 'spring', damping: 25, stiffness: 400 }}
+                        className="modal-content"
+                        style={{ width: '480px', maxHeight: '80vh', backgroundColor: '#121212' }}
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div style={{ padding: '24px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.02)' }}>
+                            <h2 style={{ fontSize: '20px', margin: 0, fontWeight: 600 }}>Selective Export</h2>
+                            <button onClick={onClose} className="tool-btn" style={{ width: '36px', height: '36px', borderRadius: '50%' }}>
+                                <X size={20} />
+                            </button>
                         </div>
-                    </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {websites.map(site => (
-                            <div
-                                key={site.id}
-                                onClick={() => toggleSelect(site.id)}
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '12px',
-                                    padding: '10px 16px',
-                                    backgroundColor: 'rgba(255,255,255,0.03)',
-                                    borderRadius: '10px',
-                                    cursor: 'pointer',
-                                    border: `1px solid ${selectedIds.includes(site.id) ? '#3b82f6' : 'transparent'}`,
-                                    transition: 'all 0.2s'
-                                }}
-                            >
-                                <div style={{
-                                    width: '18px',
-                                    height: '18px',
-                                    borderRadius: '4px',
-                                    border: '2px solid rgba(255,255,255,0.2)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    backgroundColor: selectedIds.includes(site.id) ? '#3b82f6' : 'transparent',
-                                    borderColor: selectedIds.includes(site.id) ? '#3b82f6' : 'rgba(255,255,255,0.2)'
-                                }}>
-                                    {selectedIds.includes(site.id) && <Check size={12} strokeWidth={3} />}
-                                </div>
-
-                                <div style={{
-                                    width: '24px', height: '24px',
-                                    backgroundColor: 'rgba(255,255,255,0.05)',
-                                    borderRadius: '6px',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    overflow: 'hidden'
-                                }}>
-                                    {site.icon ? (
-                                        <img src={site.icon} style={{ width: '16px', height: '16px', objectFit: 'contain' }} alt="" />
-                                    ) : (
-                                        <Globe size={14} style={{ opacity: 0.2 }} />
-                                    )}
-                                </div>
-
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                    <div style={{ fontSize: '13px', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{site.name || 'Untitled'}</div>
-                                    <div style={{ fontSize: '10px', opacity: 0.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{site.url}</div>
+                        <div style={{ padding: '32px', overflowY: 'auto', flex: 1 }}>
+                            <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Include in export file</span>
+                                <div style={{ display: 'flex', gap: '16px' }}>
+                                    <button onClick={selectAll} style={{ background: 'none', border: 'none', color: 'var(--accent-color)', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>Select All</button>
+                                    <button onClick={selectNone} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '13px', cursor: 'pointer' }}>Clear</button>
                                 </div>
                             </div>
-                        ))}
-                    </div>
-                </div>
 
-                <div style={{ padding: '20px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-                    <button className="btn-secondary" onClick={onClose}>Cancel</button>
-                    <button
-                        className="btn-primary"
-                        disabled={selectedIds.length === 0}
-                        onClick={() => onExport(selectedIds)}
-                        style={{ backgroundColor: '#3b82f6', border: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}
-                    >
-                        <Download size={16} /> Export Selected ({selectedIds.length})
-                    </button>
-                </div>
-            </motion.div>
-        </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                {websites.map(site => (
+                                    <div
+                                        key={site.id}
+                                        onClick={() => toggleSelect(site.id)}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '16px',
+                                            padding: '16px',
+                                            backgroundColor: 'rgba(255,255,255,0.03)',
+                                            borderRadius: '16px',
+                                            cursor: 'pointer',
+                                            border: `1px solid ${selectedIds.includes(site.id) ? 'var(--accent-color)' : 'var(--border-color)'}`,
+                                            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                                            boxShadow: selectedIds.includes(site.id) ? '0 4px 12px rgba(0, 122, 255, 0.1)' : 'none'
+                                        }}
+                                    >
+                                        <div style={{
+                                            width: '20px',
+                                            height: '20px',
+                                            borderRadius: '6px',
+                                            border: '2px solid',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            backgroundColor: selectedIds.includes(site.id) ? 'var(--accent-color)' : 'transparent',
+                                            borderColor: selectedIds.includes(site.id) ? 'var(--accent-color)' : 'var(--border-color)',
+                                            transition: 'all 0.2s ease'
+                                        }}>
+                                            {selectedIds.includes(site.id) && <Check size={14} strokeWidth={3} color="white" />}
+                                        </div>
+
+                                        <div style={{
+                                            width: '32px', height: '32px',
+                                            backgroundColor: 'rgba(255,255,255,0.05)',
+                                            borderRadius: '8px',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            overflow: 'hidden',
+                                            border: '1px solid var(--border-color)'
+                                        }}>
+                                            {site.icon ? (
+                                                <img src={site.icon} style={{ width: '20px', height: '20px', objectFit: 'contain' }} alt="" />
+                                            ) : (
+                                                <Globe size={18} style={{ opacity: 0.1 }} />
+                                            )}
+                                        </div>
+
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <div style={{ fontSize: '14px', fontWeight: 600, color: 'white' }}>{site.name || 'Untitled'}</div>
+                                            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{site.url}</div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div style={{ padding: '24px 32px', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'flex-end', gap: '16px', background: 'rgba(255,255,255,0.01)' }}>
+                            <button className="btn-secondary" onClick={onClose} style={{ height: '40px', padding: '0 24px', borderRadius: '10px' }}>Cancel</button>
+                            <button
+                                className="btn-primary"
+                                disabled={selectedIds.length === 0}
+                                onClick={() => onExport(selectedIds)}
+                                style={{ height: '40px', padding: '0 24px', borderRadius: '10px' }}
+                            >
+                                <Download size={16} /> Export ({selectedIds.length})
+                            </button>
+                        </div>
+                    </motion.div>
+                </motion.div>
+            )}
+        </AnimatePresence>
     )
 }
 

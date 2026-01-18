@@ -13,7 +13,8 @@ import {
     Download,
     Lock,
     Unlock,
-    Sliders
+    Sliders,
+    Search
 } from 'lucide-react'
 import LayoutMenu from './LayoutMenu'
 
@@ -61,6 +62,8 @@ const TitleBar: React.FC<TitleBarProps> = ({
 
     const [openLayoutMenu, setOpenLayoutMenu] = React.useState(false)
     const [layoutMenuRect, setLayoutMenuRect] = React.useState<DOMRect | null>(null)
+    const [isAddressBarExpanded, setIsAddressBarExpanded] = React.useState(false)
+    const addressInputRef = React.useRef<HTMLInputElement>(null)
 
     const handleOpenLayoutMenu = (e: React.MouseEvent<HTMLButtonElement>) => {
         const rect = e.currentTarget.getBoundingClientRect()
@@ -92,114 +95,120 @@ const TitleBar: React.FC<TitleBarProps> = ({
         onOpenSettingsMenu(rect)
     }
 
+    const toggleAddressBar = () => {
+        setIsAddressBarExpanded(!isAddressBarExpanded)
+        if (!isAddressBarExpanded) {
+            setTimeout(() => addressInputRef.current?.focus(), 100)
+        }
+    }
+
+    const WindowControls = () => (
+        <div className="window-controls-traffic-lights no-drag">
+            <button className="traffic-light close" onClick={() => (window as any).electronAPI.close()} title="Close">
+                <X size={8} strokeWidth={4} />
+            </button>
+            <button className="traffic-light minimize" onClick={() => (window as any).electronAPI.minimize()} title="Minimize">
+                <Minus size={8} strokeWidth={4} />
+            </button>
+            <button className="traffic-light maximize" onClick={() => (window as any).electronAPI.maximize()} title="Maximize">
+                <Maximize2 size={8} strokeWidth={4} />
+            </button>
+        </div>
+    )
+
     return (
         <div className="title-bar">
-            {/* Clickable spacer for macOS traffic lights */}
-            {isMac && <div className="macos-traffic-lights-spacer"></div>}
+            {isMac ? <div className="macos-traffic-lights-spacer"></div> : <WindowControls />}
 
-            <div className="title-bar-actions no-drag">
+            {/* Left Group: Navigation */}
+            <div className="title-bar-actions no-drag" style={{ gap: '2px' }}>
                 <button onClick={onBack} title="Back">
-                    <ChevronLeft size={16} strokeWidth={1.5} />
+                    <ChevronLeft size={16} />
                 </button>
                 <button onClick={onForward} title="Forward">
-                    <ChevronRight size={16} strokeWidth={1.5} />
+                    <ChevronRight size={16} />
                 </button>
                 <button onClick={onReload} title="Reload">
-                    <RotateCcw size={15} strokeWidth={1.5} />
+                    <RotateCcw size={15} />
+                </button>
+                <button className="tool-btn" onClick={onToggleDownloads} title="Downloads">
+                    <Download size={17} />
                 </button>
             </div>
 
-            <div className="title-bar-center no-drag" style={{ flex: 1, display: 'flex', justifyContent: 'center', padding: '0 20px', gap: '8px' }}>
+            {/* Center Group: Launcher & Expandable Address Bar */}
+            <div className="title-bar-center no-drag" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
                 <button
-                    className="tool-btn"
+                    className={`tool-btn ${isAddressBarExpanded ? 'hidden' : ''}`}
                     onClick={onToggleLauncher}
                     title="Launcher (Cmd+O)"
                 >
-                    <LayoutGrid size={18} strokeWidth={1.5} />
+                    <LayoutGrid size={18} />
                 </button>
 
+                <div
+                    className={`address-bar-container ${isAddressBarExpanded ? 'expanded' : ''}`}
+                    onClick={toggleAddressBar}
+                >
+                    {!isAddressBarExpanded ? (
+                        <Search size={16} strokeWidth={2} style={{ opacity: 0.6 }} />
+                    ) : (
+                        <input
+                            ref={addressInputRef}
+                            type="text"
+                            value={inputValue}
+                            onChange={(e) => setInputValue(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Escape') {
+                                    setIsAddressBarExpanded(false)
+                                }
+                                handleKeyDown(e)
+                            }}
+                            onBlur={() => setIsAddressBarExpanded(false)}
+                            onFocus={(e) => e.target.select()}
+                            placeholder="Search or enter address"
+                            className="address-bar-input"
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                    )}
+                </div>
+
+                <button
+                    className={`tool-btn ${isAddressBarExpanded ? 'hidden' : ''}`}
+                    onClick={onToggleMissionControl}
+                    title="Mission Control"
+                >
+                    <Square size={18} />
+                </button>
+            </div>
+
+            {/* Right Group: Layout & Settings */}
+            <div className="layout-group no-drag" style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
                 {isCurrentTabLockable && (
                     <button
                         className={`tool-btn ${isCurrentTabLocked ? 'active' : ''}`}
                         onClick={() => !isCurrentTabLocked && onToggleLockTab?.()}
-                        title={isCurrentTabLocked ? "Locked (Enter password to unlock)" : "Lock Tab Manually"}
-                        style={{
-                            color: isCurrentTabLocked ? '#ef4444' : 'inherit',
-                            cursor: isCurrentTabLocked ? 'default' : 'pointer',
-                            opacity: isCurrentTabLocked ? 0.8 : 1
-                        }}
+                        title={isCurrentTabLocked ? "Locked" : "Lock Tab"}
+                        style={{ color: isCurrentTabLocked ? '#ef4444' : 'inherit' }}
                     >
-                        {isCurrentTabLocked ? <Lock size={18} strokeWidth={1.5} /> : <Unlock size={18} strokeWidth={1.5} />}
+                        {isCurrentTabLocked ? <Lock size={17} /> : <Unlock size={17} />}
                     </button>
                 )}
 
-                <div style={{ flex: 1, maxWidth: '600px', position: 'relative' }}>
-                    <input
-                        type="text"
-                        value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        onFocus={(e) => e.target.select()}
-                        placeholder="Search or enter address"
-                        style={{
-                            width: '100%',
-                            height: '28px',
-                            backgroundColor: 'rgba(255, 255, 255, 0.04)',
-                            border: '1px solid var(--border-color)',
-                            borderRadius: '8px',
-                            padding: '0 12px',
-                            color: 'var(--text-primary)',
-                            fontSize: '12px',
-                            outline: 'none',
-                            textAlign: 'center',
-                            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                        }}
-                        className="address-bar-input"
-                    />
-                </div>
-
-                <button
-                    className="tool-btn"
-                    onClick={onToggleMissionControl}
-                    title="Mission Control"
-                >
-                    <Square size={18} strokeWidth={1.5} />
-                </button>
-            </div>
-
-            <div className="layout-group no-drag" style={{ display: 'flex', gap: '4px', borderLeft: '1px solid var(--border-color)', paddingLeft: '8px', paddingRight: '8px' }}>
                 <button
                     className={`tool-btn ${openLayoutMenu ? 'active' : ''}`}
                     onClick={handleOpenLayoutMenu}
-                    title="Change Layout"
+                    title="Layout"
                 >
-                    <Layout size={18} strokeWidth={1.5} />
+                    <Layout size={17} />
                 </button>
 
-                <button
-                    className="tool-btn"
-                    onClick={onToggleDownloads}
-                    title="Downloads"
-                >
-                    <Download size={18} strokeWidth={1.5} />
+                <button className="tool-btn" onClick={onOpenConfig} title="Configuration">
+                    <Sliders size={17} />
                 </button>
 
-                <div style={{ width: '1px', height: '18px', backgroundColor: 'var(--border-color)', margin: 'auto 4px' }} />
-
-                <button
-                    className="tool-btn"
-                    onClick={onOpenConfig}
-                    title="Configuration"
-                >
-                    <Sliders size={18} strokeWidth={1.5} />
-                </button>
-
-                <button
-                    className="tool-btn"
-                    onClick={handleOpenSettings}
-                    title="Settings"
-                >
-                    <Settings size={18} strokeWidth={1.5} />
+                <button className="tool-btn" onClick={handleOpenSettings} title="Settings">
+                    <Settings size={17} />
                 </button>
             </div>
 
@@ -210,23 +219,7 @@ const TitleBar: React.FC<TitleBarProps> = ({
                 currentLayout={currentLayout}
                 onSetLayout={onSetLayout}
             />
-
-            {
-                !isMac && (
-                    <div className="window-controls no-drag">
-                        <button className="control-btn" onClick={() => (window as any).electronAPI.minimize()}>
-                            <Minus size={14} strokeWidth={1.5} />
-                        </button>
-                        <button className="control-btn" onClick={() => (window as any).electronAPI.maximize()}>
-                            <Maximize2 size={14} strokeWidth={1.5} />
-                        </button>
-                        <button className="control-btn close" onClick={() => (window as any).electronAPI.close()}>
-                            <X size={14} strokeWidth={1.5} />
-                        </button>
-                    </div>
-                )
-            }
-        </div >
+        </div>
     )
 }
 
