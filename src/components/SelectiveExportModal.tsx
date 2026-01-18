@@ -42,10 +42,10 @@ const SelectiveExportModal: React.FC<SelectiveExportModalProps> = ({ isOpen, onC
                         exit={{ opacity: 0, scale: 0.9, y: 20 }}
                         transition={{ type: 'spring', damping: 25, stiffness: 400 }}
                         className="modal-content"
-                        style={{ width: '480px', maxHeight: '80vh', backgroundColor: '#121212' }}
+                        style={{ width: '480px', maxHeight: '80vh', backgroundColor: 'var(--modal-bg)' }}
                         onClick={e => e.stopPropagation()}
                     >
-                        <div style={{ padding: '24px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.02)' }}>
+                        <div style={{ padding: '24px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', background: 'var(--btn-hover-bg)' }}>
                             <h2 style={{ fontSize: '20px', margin: 0, fontWeight: 600 }}>Selective Export</h2>
                             <button onClick={onClose} className="tool-btn" style={{ width: '36px', height: '36px', borderRadius: '50%' }}>
                                 <X size={20} />
@@ -71,7 +71,7 @@ const SelectiveExportModal: React.FC<SelectiveExportModalProps> = ({ isOpen, onC
                                             alignItems: 'center',
                                             gap: '16px',
                                             padding: '16px',
-                                            backgroundColor: 'rgba(255,255,255,0.03)',
+                                            backgroundColor: 'var(--card-bg)',
                                             borderRadius: '16px',
                                             cursor: 'pointer',
                                             border: `1px solid ${selectedIds.includes(site.id) ? 'var(--accent-color)' : 'var(--border-color)'}`,
@@ -96,7 +96,7 @@ const SelectiveExportModal: React.FC<SelectiveExportModalProps> = ({ isOpen, onC
 
                                         <div style={{
                                             width: '32px', height: '32px',
-                                            backgroundColor: 'rgba(255,255,255,0.05)',
+                                            backgroundColor: 'var(--btn-hover-bg)',
                                             borderRadius: '8px',
                                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                                             overflow: 'hidden',

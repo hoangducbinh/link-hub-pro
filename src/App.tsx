@@ -49,8 +49,6 @@ function App() {
   const [isLocked, setIsLocked] = useState(false)
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false)
 
-  // Config Manager State
-  const [customGrid, setCustomGrid] = useState({ rows: 3, cols: 3 })
   const [sequenceConfig, setSequenceConfig] = useState({
     reloadInterval: 5000,
     scrollInterval: 3000,
@@ -251,15 +249,6 @@ function App() {
       webviewEl.removeEventListener('did-stop-loading', handleStopLoading)
     }
   }, [activeIds[0], activeWebViews.length])
-
-  const handleNavigate = (url: string) => {
-    const activeId = activeIds[0]
-    if (!activeId) return
-    const webviewEl = document.getElementById(`webview-${activeId}`) as any
-    if (webviewEl && !webviewEl.isDestroyed?.()) {
-      webviewEl.loadURL(url)
-    }
-  }
 
   useEffect(() => {
     const removeListener = (window as any).electronAPI.onToggleLauncher(() => {
@@ -526,20 +515,18 @@ function App() {
     }
   }, [config.shortcuts, activeIds, layout])
 
+  const handleToggleTheme = () => {
+    const newTheme = (config.settings.theme === 'dark' ? 'light' : 'dark') as 'dark' | 'light'
+    const newConfig = {
+      ...config,
+      settings: { ...config.settings, theme: newTheme }
+    }
+    handleSaveConfig(newConfig)
+  }
+
   const handleSaveConfig = async (newConfig: AppConfig) => {
     setConfig(newConfig)
     await (window as any).electronAPI.saveConfig({ name: 'default.json', data: newConfig })
-  }
-
-  const handleImportConfig = async () => {
-    const result = await (window as any).electronAPI.importConfig()
-    if (result) {
-      setConfig(result.data)
-    }
-  }
-
-  const handleExportConfig = async () => {
-    await (window as any).electronAPI.exportConfig({ data: config, defaultName: 'linkhub-config.json' })
   }
 
   const handleRemoveDownloadItem = async (id: string) => {
@@ -577,12 +564,12 @@ function App() {
         onOpenSettingsMenu={(rect) => setSettingsMenuRect(rect)}
         onOpenConfig={() => setIsConfigModalOpen(true)}
         onToggleDownloads={() => setIsDownloadManagerOpen(prev => !prev)}
+        onToggleTheme={handleToggleTheme}
+        currentTheme={config.settings.theme}
         currentLayout={layout}
         currentUrl={currentUrl}
-        onNavigate={(url) => {
+        onNavigate={() => {
           if (activeIds.length > 0) {
-            const activeId = activeIds[0] // Or logic to determine specific tab
-            // Handle navigation... this prop might be generic for the TitleBar
           }
         }}
         isCurrentTabLockable={!!config.websites.find(w => w.id === activeWebViews.find(wv => wv.instanceId === activeIds[0])?.appId)?.requirePassword}
@@ -601,8 +588,7 @@ function App() {
         isOpen={isConfigModalOpen}
         onClose={() => setIsConfigModalOpen(false)}
         activeWebViews={activeWebViews}
-        onUpdateCustomGrid={(rows, cols) => {
-          setCustomGrid({ rows, cols })
+        onUpdateCustomGrid={() => {
           setLayout('grid-custom')
         }}
         onBulkOpen={(urls, targetLayout) => {
@@ -689,8 +675,6 @@ function App() {
           onClose={() => setSettingsMenuRect(null)}
           anchorRect={settingsMenuRect}
           onOpenConfig={() => setIsSettingsModalOpen(true)}
-          onImport={handleImportConfig}
-          onExport={handleExportConfig}
         />
 
         {!isLauncherOpen && !isMissionControlOpen && activeWebViews.length === 0 && (

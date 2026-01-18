@@ -19,7 +19,7 @@
   position: fixed;
   inset: 0;
   z-index: 10005;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: var(--overlay-bg);
   backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
@@ -31,27 +31,26 @@
   width: 100%;
   max-width: 900px;
   max-height: 80vh;
-  background-color: #1a1a1a;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: var(--modal-bg);
+  border: 1px solid var(--border-color);
   border-radius: 16px;
-  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-premium);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  color: white;
+  color: var(--text-primary);
 }
 
 .settings-header {
   padding: 20px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
 .settings-tabs {
-  display: flex;
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: var(--btn-hover-bg);
   padding: 4px;
   border-radius: 10px;
   gap: 4px;
@@ -64,14 +63,14 @@
   font-weight: 500;
   border: none;
   background: none;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .settings-tab-btn.active {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: white;
+  background-color: var(--btn-active-bg);
+  color: var(--text-primary);
 }
 
 .settings-content {
@@ -88,15 +87,15 @@
 
 .settings-sidebar {
   width: 320px;
-  background-color: #222;
-  border-left: 1px solid rgba(255, 255, 255, 0.05);
+  background-color: var(--btn-hover-bg);
+  border-left: 1px solid var(--border-color);
   padding: 24px;
   overflow-y: auto;
 }
 
 .site-card {
-  background-color: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 16px;
   display: flex;
@@ -107,8 +106,8 @@
 }
 
 .site-card:hover {
-  background-color: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.1);
+  background-color: var(--btn-active-bg);
+  border-color: var(--border-bright);
 }
 
 .site-card-actions {
@@ -142,11 +141,11 @@
 }
 
 .settings-input {
-  background-color: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: var(--btn-hover-bg);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 8px 12px;
-  color: white;
+  color: var(--text-primary);
   font-size: 13px;
   outline: none;
   width: 100%;

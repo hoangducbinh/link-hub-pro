@@ -7,28 +7,14 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  /* Premium Design Tokens */
-  --bg-color: #000000;
-  --text-primary: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.5);
-  --text-tertiary: rgba(255, 255, 255, 0.3);
-  --titlebar-bg: rgba(20, 20, 20, 0.6);
-  --border-color: rgba(255, 255, 255, 0.08);
-  --border-bright: rgba(255, 255, 255, 0.15);
-  --btn-hover-bg: rgba(255, 255, 255, 0.08);
-  --btn-active-bg: rgba(255, 255, 255, 0.12);
-  --overlay-bg: rgba(0, 0, 0, 0.4);
-  --card-bg: rgba(255, 255, 255, 0.035);
-
+  /* Common Tokens */
   --accent-color: #007AFF;
   --accent-glow: rgba(0, 122, 255, 0.3);
-
-  /* Elevation & Effects */
   --blur-heavy: 24px;
   --blur-medium: 12px;
+  --blur-light: 8px;
   --radius-premium: 14px;
   --radius-pill: 9999px;
-  --shadow-premium: 0 12px 40px rgba(0, 0, 0, 0.5);
 
   /* Animation Tokens */
   --standard-easing: cubic-bezier(0.4, 0, 0.2, 1);
@@ -38,6 +24,40 @@
   --duration-slow: 350ms;
 }
 
+.theme-dark {
+  --bg-color: #0d0d0f;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-tertiary: #64748b;
+  --titlebar-bg: rgba(15, 15, 16, 0.6);
+  --menu-bg: rgba(22, 22, 24, 0.9);
+  --border-color: rgba(255, 255, 255, 0.06);
+  --border-bright: rgba(255, 255, 255, 0.12);
+  --btn-hover-bg: rgba(255, 255, 255, 0.06);
+  --btn-active-bg: rgba(255, 255, 255, 0.1);
+  --overlay-bg: rgba(0, 0, 0, 0.5);
+  --card-bg: rgba(30, 30, 35, 0.4);
+  --shadow-premium: 0 12px 40px rgba(0, 0, 0, 0.6);
+  --modal-bg: #121214;
+}
+
+.theme-light {
+  --bg-color: #f1f5f9;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-tertiary: #94a3b8;
+  --titlebar-bg: rgba(255, 255, 255, 0.6);
+  --menu-bg: rgba(255, 255, 255, 0.85);
+  --border-color: rgba(0, 0, 0, 0.08);
+  --border-bright: rgba(0, 0, 0, 0.12);
+  --btn-hover-bg: rgba(0, 0, 0, 0.04);
+  --btn-active-bg: rgba(0, 0, 0, 0.07);
+  --overlay-bg: rgba(255, 255, 255, 0.45);
+  --card-bg: #ffffff;
+  --shadow-premium: 0 12px 40px rgba(15, 23, 42, 0.08);
+  --modal-bg: #ffffff;
+}
+
 html,
 body {
   margin: 0;
@@ -45,8 +65,9 @@ body {
   height: 100%;
   width: 100%;
   overflow: hidden;
-  background-color: #000;
-  transition: background-color 0.3s ease;
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 * {
@@ -306,7 +327,7 @@ body {
   bottom: 0;
   overflow: hidden;
   /* Tier 1: Strictly Clean */
-  background-color: #000000;
+  background-color: var(--bg-color);
   filter: none !important;
   backdrop-filter: none !important;
   transform: none !important;

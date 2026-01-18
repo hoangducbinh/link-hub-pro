@@ -59,7 +59,7 @@ const ConfigManagerModal: React.FC<ConfigManagerModalProps> = ({
                         style={{
                             width: '1000px',
                             height: '560px',
-                            backgroundColor: '#121212',
+                            backgroundColor: 'var(--modal-bg)',
                         }}
                         onClick={e => e.stopPropagation()}
                     >
@@ -73,7 +73,7 @@ const ConfigManagerModal: React.FC<ConfigManagerModalProps> = ({
                             borderBottom: '1px solid var(--border-color)'
                         }}>
                             <div>
-                                <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: 'white' }}>Configuration Manager</h2>
+                                <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: 'var(--text-primary)' }}>Configuration Manager</h2>
                                 <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--text-secondary)' }}>Advanced controls and automation</p>
                             </div>
                             <button onClick={onClose} className="tool-btn" style={{ width: '36px', height: '36px', borderRadius: '50%' }}>
@@ -82,12 +82,12 @@ const ConfigManagerModal: React.FC<ConfigManagerModalProps> = ({
                         </div>
 
                         {/* Tabs */}
-                        <div style={{ display: 'flex', padding: '0 32px', gap: '24px', borderBottom: '1px solid var(--border-color)', backgroundColor: 'rgba(255,255,255,0.01)' }}>
+                        <div style={{ display: 'flex', padding: '0 32px', gap: '24px', borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--btn-hover-bg)' }}>
                             <div onClick={() => setActiveTab('grid')} style={{
                                 padding: '10px 16px',
                                 cursor: 'pointer',
                                 borderBottom: activeTab === 'grid' ? '2px solid var(--accent-color)' : '2px solid transparent',
-                                color: activeTab === 'grid' ? 'white' : 'var(--text-secondary)',
+                                color: activeTab === 'grid' ? 'var(--text-primary)' : 'var(--text-secondary)',
                                 fontWeight: activeTab === 'grid' ? 600 : 400,
                                 display: 'flex',
                                 alignItems: 'center',
@@ -98,7 +98,7 @@ const ConfigManagerModal: React.FC<ConfigManagerModalProps> = ({
                                 padding: '10px 16px',
                                 cursor: 'pointer',
                                 borderBottom: activeTab === 'tabs' ? '2px solid var(--accent-color)' : '2px solid transparent',
-                                color: activeTab === 'tabs' ? 'white' : 'var(--text-secondary)',
+                                color: activeTab === 'tabs' ? 'var(--text-primary)' : 'var(--text-secondary)',
                                 fontWeight: activeTab === 'tabs' ? 600 : 400,
                                 display: 'flex',
                                 alignItems: 'center',
@@ -109,7 +109,7 @@ const ConfigManagerModal: React.FC<ConfigManagerModalProps> = ({
                                 padding: '10px 16px',
                                 cursor: 'pointer',
                                 borderBottom: activeTab === 'sequence' ? '2px solid var(--accent-color)' : '2px solid transparent',
-                                color: activeTab === 'sequence' ? 'white' : 'var(--text-secondary)',
+                                color: activeTab === 'sequence' ? 'var(--text-primary)' : 'var(--text-secondary)',
                                 fontWeight: activeTab === 'sequence' ? 600 : 400,
                                 display: 'flex',
                                 alignItems: 'center',
@@ -120,7 +120,7 @@ const ConfigManagerModal: React.FC<ConfigManagerModalProps> = ({
                                 padding: '10px 16px',
                                 cursor: 'pointer',
                                 borderBottom: activeTab === 'view' ? '2px solid var(--accent-color)' : '2px solid transparent',
-                                color: activeTab === 'view' ? 'white' : 'var(--text-secondary)',
+                                color: activeTab === 'view' ? 'var(--text-primary)' : 'var(--text-secondary)',
                                 fontWeight: activeTab === 'view' ? 600 : 400,
                                 display: 'flex',
                                 alignItems: 'center',

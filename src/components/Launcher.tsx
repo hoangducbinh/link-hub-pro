@@ -221,14 +221,14 @@ const Launcher: React.FC<LauncherProps> = ({ isOpen, onClose, onSelect, apps }) 
                                         width: '64px',
                                         height: '64px',
                                         borderRadius: '16px',
-                                        backgroundColor: activeIndex === index ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.06)',
+                                        backgroundColor: activeIndex === index ? 'var(--btn-active-bg)' : 'var(--btn-hover-bg)',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         marginBottom: '10px',
                                         boxShadow: activeIndex === index ? '0 8px 32px rgba(0,0,0,0.4)' : '0 2px 12px rgba(0,0,0,0.1)',
                                         overflow: 'hidden',
-                                        border: activeIndex === index ? '1px solid rgba(255,255,255,0.3)' : '1px solid rgba(255,255,255,0.08)',
+                                        border: activeIndex === index ? '1px solid var(--accent-color)' : '1px solid var(--border-color)',
                                         backdropFilter: 'blur(12px)',
                                         position: 'relative',
                                         transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
@@ -251,13 +251,13 @@ const Launcher: React.FC<LauncherProps> = ({ isOpen, onClose, onSelect, apps }) 
                                                 }}
                                             />
                                         ) : (
-                                            <Globe size={36} color={activeIndex === index ? "white" : "rgba(255,255,255,0.6)"} />
+                                            <Globe size={36} color={activeIndex === index ? "var(--accent-color)" : "var(--text-secondary)"} />
                                         )}
                                     </div>
                                     <span style={{
                                         fontSize: '11px',
                                         fontWeight: 500,
-                                        color: 'rgba(255,255,255,0.9)',
+                                        color: 'var(--text-primary)',
                                         textShadow: '0 1px 2px rgba(0,0,0,0.5)',
                                         width: '100%',
                                         whiteSpace: 'nowrap',

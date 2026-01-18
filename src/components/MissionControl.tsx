@@ -130,14 +130,14 @@ const MissionControl: React.FC<MissionControlProps> = ({
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 gap: '10px',
-                                                borderBottom: '1px solid rgba(255,255,255,0.03)',
-                                                backgroundColor: 'rgba(255,255,255,0.02)'
+                                                borderBottom: '1px solid var(--border-color)',
+                                                backgroundColor: 'var(--btn-hover-bg)'
                                             }}>
                                                 <div style={{
                                                     width: '20px',
                                                     height: '20px',
                                                     borderRadius: '5px',
-                                                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                                                    backgroundColor: 'var(--btn-active-bg)',
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     justifyContent: 'center',
@@ -146,14 +146,14 @@ const MissionControl: React.FC<MissionControlProps> = ({
                                                     {wv.icon ? (
                                                         <img src={wv.icon} style={{ width: '16px', height: '16px', borderRadius: '2px' }} alt="" />
                                                     ) : (
-                                                        <Globe size={12} color="rgba(255,255,255,0.8)" />
+                                                        <Globe size={12} color="var(--text-secondary)" />
                                                     )}
                                                 </div>
                                                 <div style={{ flex: 1, overflow: 'hidden' }}>
                                                     <div style={{
                                                         fontSize: '12px',
                                                         fontWeight: 500,
-                                                        color: 'rgba(255,255,255,0.9)',
+                                                        color: 'var(--text-primary)',
                                                         whiteSpace: 'nowrap',
                                                         overflow: 'hidden',
                                                         textOverflow: 'ellipsis'
@@ -166,7 +166,7 @@ const MissionControl: React.FC<MissionControlProps> = ({
                                             {/* Preview Area */}
                                             <div style={{
                                                 flex: 1,
-                                                backgroundColor: '#000',
+                                                backgroundColor: 'var(--bg-color)',
                                                 position: 'relative',
                                                 overflow: 'hidden'
                                             }}>

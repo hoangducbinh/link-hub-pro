@@ -1,18 +1,16 @@
 import React from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Settings, Download, Upload, Share2, Layout, HelpCircle } from 'lucide-react'
+import { Settings, Share2, Layout, HelpCircle } from 'lucide-react'
 
 interface SettingsMenuProps {
     isOpen: boolean
     onClose: () => void
     anchorRect: DOMRect | null
     onOpenConfig: () => void
-    onImport: () => void
-    onExport: () => void
 }
 
-const SettingsMenu: React.FC<SettingsMenuProps> = ({ isOpen, onClose, anchorRect, onOpenConfig, onImport, onExport }) => {
+const SettingsMenu: React.FC<SettingsMenuProps> = ({ isOpen, onClose, anchorRect, onOpenConfig }) => {
     const itemStyle: React.CSSProperties = {
         width: '100%',
         display: 'flex',
@@ -59,20 +57,20 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({ isOpen, onClose, anchorRect
                             top: anchorRect.bottom + 12,
                             left: Math.min(window.innerWidth - 240 - 12, Math.max(12, anchorRect.left - 200 + anchorRect.width)),
                             width: '240px',
-                            backgroundColor: 'rgba(18, 18, 18, 0.85)',
+                            backgroundColor: 'var(--menu-bg)',
                             backdropFilter: 'blur(var(--blur-medium))',
                             border: '1px solid var(--border-bright)',
                             borderRadius: '16px',
                             boxShadow: 'var(--shadow-premium)',
                             padding: '8px',
-                            color: 'white',
+                            color: 'var(--text-primary)',
                             display: 'flex',
                             flexDirection: 'column',
                             gap: '4px'
                         }}
                         onMouseDown={(e) => e.stopPropagation()}
                     >
-                        <div style={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: 700, color: 'rgba(255,255,255,0.3)', padding: '8px 12px', letterSpacing: '0.1em' }}>Configuration</div>
+                        <div style={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-tertiary)', padding: '8px 12px', letterSpacing: '0.1em' }}>Configuration</div>
 
                         <button
                             onClick={() => { onOpenConfig(); onClose(); }}
@@ -84,28 +82,9 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({ isOpen, onClose, anchorRect
                             <span>Manage Websites</span>
                         </button>
 
-                        {/* <button
-                            onClick={() => { onImport(); onClose(); }}
-                            style={itemStyle}
-                            onMouseEnter={hoverStyle}
-                            onMouseLeave={leaveStyle}
-                        >
-                            <Download size={16} color="#22c55e" />
-                            <span>Import Config (JSON)</span>
-                        </button>
-
-                        <button
-                            onClick={() => { onExport(); onClose(); }}
-                            style={itemStyle}
-                            onMouseEnter={hoverStyle}
-                            onMouseLeave={leaveStyle}
-                        >
-                            <Upload size={16} color="#a855f7" />
-                            <span>Export Config (JSON)</span>
-                        </button> */}
 
                         <div style={{ height: '1px', backgroundColor: 'rgba(255,255,255,0.05)', margin: '4px 0' }} />
-                        <div style={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: 700, color: 'rgba(255,255,255,0.3)', padding: '8px 12px', letterSpacing: '0.1em' }}>System</div>
+                        <div style={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-tertiary)', padding: '8px 12px', letterSpacing: '0.1em' }}>System</div>
 
                         <button style={{ ...itemStyle, opacity: 0.5, cursor: 'not-allowed' }}>
                             <Layout size={16} />

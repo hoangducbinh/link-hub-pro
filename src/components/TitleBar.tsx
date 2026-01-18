@@ -14,7 +14,9 @@ import {
     Lock,
     Unlock,
     Sliders,
-    Search
+    Search,
+    Sun,
+    Moon
 } from 'lucide-react'
 import LayoutMenu from './LayoutMenu'
 
@@ -28,6 +30,8 @@ interface TitleBarProps {
     onOpenSettingsMenu: (rect: DOMRect) => void
     onOpenConfig: () => void
     onToggleDownloads: () => void
+    onToggleTheme: () => void
+    currentTheme: 'dark' | 'light' | 'system'
     currentLayout: string
     currentUrl: string
     onNavigate: (url: string) => void
@@ -46,6 +50,8 @@ const TitleBar: React.FC<TitleBarProps> = ({
     onOpenConfig,
     onOpenSettingsMenu,
     onToggleDownloads,
+    onToggleTheme,
+    currentTheme,
     currentLayout,
     currentUrl,
     onNavigate,
@@ -205,6 +211,10 @@ const TitleBar: React.FC<TitleBarProps> = ({
 
                 <button className="tool-btn" onClick={onOpenConfig} title="Configuration">
                     <Sliders size={17} />
+                </button>
+
+                <button className="tool-btn" onClick={onToggleTheme} title={`Switch to ${currentTheme === 'dark' ? 'Light' : 'Dark'} Mode`}>
+                    {currentTheme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
                 </button>
 
                 <button className="tool-btn" onClick={handleOpenSettings} title="Settings">

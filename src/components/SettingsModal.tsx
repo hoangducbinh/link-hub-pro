@@ -216,14 +216,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, config, 
                         style={{
                             width: '1000px',
                             height: '800px',
-                            backgroundColor: '#121212',
+                            backgroundColor: 'var(--modal-bg)',
                         }}
                         onClick={e => e.stopPropagation()}
                     >
-                        <div className="settings-header" style={{ padding: '24px 32px', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--border-color)' }}>
+                        <div className="settings-header" style={{ padding: '24px 32px', background: 'var(--btn-hover-bg)', borderBottom: '1px solid var(--border-color)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
                                 <h2 style={{ fontSize: '20px', margin: 0, fontWeight: 600 }}>Settings</h2>
-                                <div className="settings-tabs" style={{ display: 'flex', gap: '8px', backgroundColor: 'rgba(255,255,255,0.05)', padding: '4px', borderRadius: '10px' }}>
+                                <div className="settings-tabs" style={{ display: 'flex', gap: '8px', backgroundColor: 'var(--btn-hover-bg)', padding: '4px', borderRadius: '10px' }}>
                                     {[
                                         { id: 'websites', label: 'Websites' },
                                         { id: 'system', label: 'System' },
@@ -239,9 +239,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, config, 
                                                 borderRadius: '8px',
                                                 fontSize: '13px',
                                                 fontWeight: activeTab === tab.id ? 600 : 400,
-                                                backgroundColor: activeTab === tab.id ? 'rgba(255,255,255,0.1)' : 'transparent',
+                                                backgroundColor: activeTab === tab.id ? 'var(--btn-active-bg)' : 'transparent',
                                                 border: 'none',
-                                                color: activeTab === tab.id ? 'white' : 'var(--text-secondary)',
+                                                color: activeTab === tab.id ? 'var(--text-primary)' : 'var(--text-secondary)',
                                                 cursor: 'pointer',
                                                 transition: 'all 0.2s ease'
                                             }}
