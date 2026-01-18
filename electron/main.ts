@@ -2,6 +2,7 @@ import { app, BrowserWindow, globalShortcut, ipcMain, dialog } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import fs from 'node:fs'
+import crypto from 'node:crypto'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -177,6 +178,16 @@ ipcMain.on('shortcuts:register-global', (_, { id, keys }) => {
 
 ipcMain.on('shortcuts:unregister-global', (_, keys) => {
   globalShortcut.unregister(keys)
+})
+
+// Security IPC
+ipcMain.handle('security:hash-password', (_, password) => {
+  return crypto.createHash('sha256').update(password).digest('hex')
+})
+
+ipcMain.handle('security:verify-password', (_, { password, hash }) => {
+  const checkHash = crypto.createHash('sha256').update(password).digest('hex')
+  return checkHash === hash
 })
 
 ipcMain.on('shortcuts:unregister-all', () => {

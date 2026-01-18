@@ -16,6 +16,12 @@ export interface Shortcut {
     enabled: boolean
 }
 
+export interface SecurityConfig {
+    appLockEnabled: boolean
+    passwordHash?: string
+    autoLockTimer: number // in minutes, 0 to disable
+}
+
 export interface AppConfig {
     version: string
     websites: WebsiteConfig[]
@@ -24,4 +30,5 @@ export interface AppConfig {
         defaultLayout: 'single' | 'split'
     }
     shortcuts: Shortcut[]
+    security: SecurityConfig
 }

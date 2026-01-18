@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { AnimatePresence } from 'framer-motion'
 import Launcher from './components/Launcher'
 import WebViewManager, { WebViewInfo } from './components/WebViewManager'
 import TitleBar from './components/TitleBar'
@@ -6,6 +7,7 @@ import MissionControl from './components/MissionControl'
 import SettingsModal from './components/SettingsModal'
 import SettingsMenu from './components/SettingsMenu'
 import DownloadManager, { DownloadItem } from './components/DownloadManager'
+import AppLockOverlay from './components/AppLockOverlay'
 import './App.css'
 
 import { getFavicon } from './utils/favicon'
@@ -28,7 +30,11 @@ const INITIAL_CONFIG: AppConfig = {
     { id: 'toggle-launcher', label: 'Toggle Launcher', keys: 'CommandOrControl+O', isGlobal: true, enabled: true },
     { id: 'toggle-mission-control', label: 'Toggle Mission Control', keys: 'CommandOrControl+Shift+M', isGlobal: false, enabled: true },
     { id: 'toggle-downloads', label: 'Toggle Downloads', keys: 'CommandOrControl+J', isGlobal: false, enabled: true }
-  ]
+  ],
+  security: {
+    appLockEnabled: false,
+    autoLockTimer: 0
+  }
 }
 
 function App() {
@@ -38,6 +44,57 @@ function App() {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
   const [settingsMenuRect, setSettingsMenuRect] = useState<DOMRect | null>(null)
   const [layout, setLayout] = useState('single')
+  const [isLocked, setIsLocked] = useState(false)
+  const lastActivityRef = useRef(Date.now())
+
+  useEffect(() => {
+    if (config.security.appLockEnabled && config.security.passwordHash) {
+      setIsLocked(true)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!config.security.appLockEnabled || config.security.autoLockTimer <= 0) return
+
+    const checkInactivity = () => {
+      if (isLocked) return
+      const now = Date.now()
+      const diff = (now - lastActivityRef.current) / 1000 / 60
+      if (diff >= config.security.autoLockTimer) {
+        setIsLocked(true)
+      }
+    }
+
+    const interval = setInterval(checkInactivity, 10000)
+
+    const activityListener = () => {
+      lastActivityRef.current = Date.now()
+    }
+
+    const blurListener = () => {
+      // When the main window loses focus, lock all active tabs that require a password
+      setActiveWebViews(prev => prev.map(wv => {
+        const site = config.websites.find(s => s.id === wv.appId)
+        if (site?.requirePassword) {
+          return { ...wv, isLocked: true }
+        }
+        return wv
+      }))
+    }
+
+    window.addEventListener('mousemove', activityListener)
+    window.addEventListener('keydown', activityListener)
+    window.addEventListener('mousedown', activityListener)
+    window.addEventListener('blur', blurListener)
+
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('mousemove', activityListener)
+      window.removeEventListener('keydown', activityListener)
+      window.removeEventListener('mousedown', activityListener)
+      window.removeEventListener('blur', blurListener)
+    }
+  }, [config.security.appLockEnabled, config.security.autoLockTimer, isLocked, config.websites])
 
   // Initialize with the first app from config
   const [activeWebViews, setActiveWebViews] = useState<WebViewInfo[]>([])
@@ -441,6 +498,15 @@ function App() {
         currentLayout={layout}
         currentUrl={currentUrl}
         onNavigate={handleNavigate}
+        isCurrentTabLockable={!!config.websites.find(s => s.id === activeWebViews.find(w => w.instanceId === activeIds[0])?.appId)?.requirePassword}
+        isCurrentTabLocked={!!activeWebViews.find(w => w.instanceId === activeIds[0])?.isLocked}
+        onToggleLockTab={() => {
+          const activeId = activeIds[0]
+          if (!activeId) return
+          setActiveWebViews(prev => prev.map(wv =>
+            wv.instanceId === activeId ? { ...wv, isLocked: !wv.isLocked } : wv
+          ))
+        }}
       />
 
       <div className="main-content">
@@ -448,6 +514,12 @@ function App() {
           webViews={activeWebViews}
           layout={layout}
           activeIds={activeIds}
+          passwordHash={config.security.passwordHash || ''}
+          onUnlockTab={(instanceId) => {
+            setActiveWebViews(prev => prev.map(wv =>
+              wv.instanceId === instanceId ? { ...wv, isLocked: false } : wv
+            ))
+          }}
         />
 
         <Launcher
@@ -471,8 +543,6 @@ function App() {
           onClose={() => setIsSettingsModalOpen(false)}
           config={config}
           onSave={handleSaveConfig}
-          onImport={handleImportConfig}
-          onExport={handleExportConfig}
         />
 
         <DownloadManager
@@ -500,6 +570,17 @@ function App() {
           </div>
         )}
       </div>
+      <AnimatePresence>
+        {isLocked && (
+          <AppLockOverlay
+            hash={config.security.passwordHash || ''}
+            onUnlock={() => {
+              setIsLocked(false)
+              lastActivityRef.current = Date.now()
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }

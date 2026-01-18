@@ -1,4 +1,6 @@
 import React from 'react'
+import AppLockOverlay from './AppLockOverlay'
+import { AnimatePresence } from 'framer-motion'
 
 export interface WebViewInfo {
     instanceId: string
@@ -7,15 +9,18 @@ export interface WebViewInfo {
     name: string
     icon?: string
     partition?: string
+    isLocked?: boolean
 }
 
 interface WebViewManagerProps {
     webViews: WebViewInfo[]
     layout: string
     activeIds: string[]
+    passwordHash: string
+    onUnlockTab: (instanceId: string) => void
 }
 
-const WebViewManager: React.FC<WebViewManagerProps> = ({ webViews, layout, activeIds }) => {
+const WebViewManager: React.FC<WebViewManagerProps> = ({ webViews, layout, activeIds, passwordHash, onUnlockTab }) => {
 
     const getStyleForWebView = (instanceId: string): React.CSSProperties => {
         const slotIndex = activeIds.indexOf(instanceId)
@@ -74,6 +79,14 @@ const WebViewManager: React.FC<WebViewManagerProps> = ({ webViews, layout, activ
                             border: 'none',
                         }}
                     />
+                    <AnimatePresence>
+                        {wv.isLocked && (
+                            <AppLockOverlay
+                                hash={passwordHash}
+                                onUnlock={() => onUnlockTab(wv.instanceId)}
+                            />
+                        )}
+                    </AnimatePresence>
                 </div>
             ))}
         </div>

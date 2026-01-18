@@ -12,7 +12,9 @@ import {
     Square,
     Layout,
     Settings,
-    Download
+    Download,
+    Lock,
+    Unlock
 } from 'lucide-react'
 
 interface TitleBarProps {
@@ -27,6 +29,9 @@ interface TitleBarProps {
     currentLayout: string
     currentUrl: string
     onNavigate: (url: string) => void
+    isCurrentTabLockable?: boolean
+    isCurrentTabLocked?: boolean
+    onToggleLockTab?: () => void
 }
 
 const TitleBar: React.FC<TitleBarProps> = ({
@@ -41,6 +46,9 @@ const TitleBar: React.FC<TitleBarProps> = ({
     currentLayout,
     currentUrl,
     onNavigate,
+    isCurrentTabLockable,
+    isCurrentTabLocked,
+    onToggleLockTab,
 }) => {
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0
     const [inputValue, setInputValue] = React.useState(currentUrl)
@@ -98,6 +106,17 @@ const TitleBar: React.FC<TitleBarProps> = ({
                 >
                     <LayoutGrid size={18} strokeWidth={1.5} />
                 </button>
+
+                {isCurrentTabLockable && (
+                    <button
+                        className={`tool-btn ${isCurrentTabLocked ? 'active' : ''}`}
+                        onClick={onToggleLockTab}
+                        title={isCurrentTabLocked ? "Unlock Tab" : "Lock Tab Manually"}
+                        style={{ color: isCurrentTabLocked ? '#ef4444' : 'inherit' }}
+                    >
+                        {isCurrentTabLocked ? <Lock size={18} strokeWidth={1.5} /> : <Unlock size={18} strokeWidth={1.5} />}
+                    </button>
+                )}
 
                 <div style={{ flex: 1, maxWidth: '600px', position: 'relative' }}>
                     <input

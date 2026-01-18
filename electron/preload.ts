@@ -44,6 +44,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   registerGlobalShortcut: (id: string, keys: string) => ipcRenderer.send('shortcuts:register-global', { id, keys }),
   unregisterGlobalShortcut: (keys: string) => ipcRenderer.send('shortcuts:unregister-global', keys),
   unregisterAllGlobalShortcuts: () => ipcRenderer.send('shortcuts:unregister-all'),
+
+  // Security APIs
+  hashPassword: (password: string) => ipcRenderer.invoke('security:hash-password', password),
+  verifyPassword: (password: string, hash: string) => ipcRenderer.invoke('security:verify-password', { password, hash }),
 })
 
 // Keep raw ipcRenderer if the template uses it, but we prefer the explicit API above

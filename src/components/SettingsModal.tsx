@@ -1,23 +1,26 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Plus, Trash2, Download, Upload, Shield, Globe, Pencil, Keyboard, RotateCcw } from 'lucide-react'
-import { AppConfig, WebsiteConfig } from '../types/Config'
+import { X, Plus, Trash2, Download, Upload, Shield, Globe, Pencil, Lock, Clock } from 'lucide-react'
+import { AppConfig, WebsiteConfig, SecurityConfig } from '../types/Config'
 import ShortcutSection from './ShortcutSection'
 import { getFavicon } from '../utils/favicon'
+import SelectiveExportModal from './SelectiveExportModal'
 
 interface SettingsModalProps {
     isOpen: boolean
     onClose: () => void
     config: AppConfig
     onSave: (newConfig: AppConfig) => void
-    onImport: () => void
-    onExport: () => void
 }
 
-const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, config, onSave, onImport, onExport }) => {
+const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, config, onSave }) => {
     const [localConfig, setLocalConfig] = useState<AppConfig>(config)
-    const [activeTab, setActiveTab] = useState<'websites' | 'system' | 'shortcuts'>('websites')
+    const [activeTab, setActiveTab] = useState<'websites' | 'system' | 'shortcuts' | 'security'>('websites')
     const [editingSite, setEditingSite] = useState<WebsiteConfig | null>(null)
+    const [isExportModalOpen, setIsExportModalOpen] = useState(false)
+    const [showPasswordSetup, setShowPasswordSetup] = useState(false)
+    const [newPassword, setNewPassword] = useState('')
+    const [importData, setImportData] = useState<AppConfig | null>(null)
 
     useEffect(() => {
         if (isOpen) {
@@ -28,7 +31,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, config, 
     const handleSaveSite = () => {
         if (!editingSite) return
 
-        const index = localConfig.websites.findIndex(s => s.id === editingSite!.id)
+        const index = localConfig.websites.findIndex(s => s.id === editingSite.id)
         let newWebsites = [...localConfig.websites]
 
         if (index >= 0) {
@@ -80,6 +83,60 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, config, 
         onSave(newConfig)
     }
 
+    const updateSecuritySetting = (updates: Partial<SecurityConfig>) => {
+        const newConfig = {
+            ...localConfig,
+            security: {
+                ...localConfig.security,
+                ...updates
+            }
+        }
+        setLocalConfig(newConfig)
+        onSave(newConfig)
+    }
+
+    const handleSetPassword = async () => {
+        if (!newPassword) return
+        const hash = await (window as any).electronAPI.hashPassword(newPassword)
+        updateSecuritySetting({ passwordHash: hash, appLockEnabled: true })
+        setNewPassword('')
+        setShowPasswordSetup(false)
+    }
+
+    const handleImportFile = async () => {
+        const result = await (window as any).electronAPI.importConfig()
+        if (result && result.data) {
+            setImportData(result.data)
+        }
+    }
+
+    const handleImportAction = (mode: 'merge' | 'overwrite') => {
+        if (!importData) return
+
+        let newConfig: AppConfig
+        if (mode === 'overwrite') {
+            newConfig = importData
+        } else {
+            const existingIds = new Set(localConfig.websites.map(w => w.id))
+            const newWebsites = [
+                ...localConfig.websites,
+                ...importData.websites.filter(w => !existingIds.has(w.id))
+            ]
+            newConfig = { ...localConfig, websites: newWebsites }
+        }
+
+        setLocalConfig(newConfig)
+        onSave(newConfig)
+        setImportData(null)
+    }
+
+    const handleExportSelected = (selectedIds: string[]) => {
+        const filteredWebsites = localConfig.websites.filter(w => selectedIds.includes(w.id))
+        const dataToExport = { ...localConfig, websites: filteredWebsites }
+            ; (window as any).electronAPI.exportConfig({ data: dataToExport, defaultName: 'linkhub-config.json' })
+        setIsExportModalOpen(false)
+    }
+
     if (!isOpen) return null
 
     return (
@@ -95,46 +152,16 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, config, 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                         <h2 style={{ fontSize: '18px', margin: 0 }}>Settings</h2>
                         <div className="settings-tabs">
-                            <button
-                                onClick={() => setActiveTab('websites')}
-                                className={`settings-tab-btn ${activeTab === 'websites' ? 'active' : ''}`}
-                            >
-                                Websites
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('system')}
-                                className={`settings-tab-btn ${activeTab === 'system' ? 'active' : ''}`}
-                            >
-                                System
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('shortcuts')}
-                                className={`settings-tab-btn ${activeTab === 'shortcuts' ? 'active' : ''}`}
-                            >
-                                Shortcuts
-                            </button>
+                            <button onClick={() => setActiveTab('websites')} className={`settings-tab-btn ${activeTab === 'websites' ? 'active' : ''}`}>Websites</button>
+                            <button onClick={() => setActiveTab('system')} className={`settings-tab-btn ${activeTab === 'system' ? 'active' : ''}`}>System</button>
+                            <button onClick={() => setActiveTab('shortcuts')} className={`settings-tab-btn ${activeTab === 'shortcuts' ? 'active' : ''}`}>Shortcuts</button>
+                            <button onClick={() => setActiveTab('security')} className={`settings-tab-btn ${activeTab === 'security' ? 'active' : ''}`}>Security</button>
                         </div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        {activeTab === 'shortcuts' && (
-                            <button
-                                title="Reset to defaults"
-                                className="btn-icon"
-                                style={{ color: 'rgba(255,255,255,0.4)' }}
-                                onClick={() => {
-                                    if (confirm('Reset all shortcuts to default?')) {
-                                        // Simple reset logic: filter out non-defaults or reset specific ones
-                                        // For now, we'll just log or show it's possible
-                                    }
-                                }}
-                            >
-                                <RotateCcw size={18} />
-                                <Keyboard size={0} style={{ display: 'none' }} />
-                            </button>
-                        )}
-                        <button onClick={onClose} className="btn-icon">
-                            <X size={20} />
-                        </button>
+                        <button onClick={handleImportFile} className="btn-icon" title="Import Config"><Upload size={18} /></button>
+                        <button onClick={() => setIsExportModalOpen(true)} className="btn-icon" title="Export Config"><Download size={18} /></button>
+                        <button onClick={onClose} className="btn-icon"><X size={20} /></button>
                     </div>
                 </div>
 
@@ -146,57 +173,32 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, config, 
                                     <span style={{ fontSize: '12px', opacity: 0.5 }}>{localConfig.websites.length} configuration entries</span>
                                     <button
                                         className="btn-secondary"
-                                        onClick={() => setEditingSite({
-                                            id: `site-${Date.now()}`,
-                                            name: '',
-                                            url: '',
-                                            sessionType: 'shared',
-                                            group: 'Default'
-                                        })}
+                                        onClick={() => setEditingSite({ id: `site-${Date.now()}`, name: '', url: '', sessionType: 'shared', group: 'Default' })}
                                         style={{ backgroundColor: '#3b82f6', border: 'none' }}
                                     >
                                         <Plus size={16} /> New Entry
                                     </button>
                                 </div>
-
-                                <div style={{
-                                    display: 'grid',
-                                    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                                    gap: '16px'
-                                }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
                                     {localConfig.websites.map(site => (
                                         <div key={site.id} className="site-card" onClick={() => setEditingSite(site)} style={{ cursor: 'pointer' }}>
                                             <div className="site-card-actions">
                                                 <button onClick={(e) => { e.stopPropagation(); setEditingSite(site); }} className="btn-icon"><Pencil size={14} /></button>
                                                 <button onClick={(e) => { e.stopPropagation(); if (confirm('Delete this site?')) handleDeleteSite(site.id); }} className="btn-icon btn-danger-icon"><Trash2 size={14} /></button>
                                             </div>
-
                                             <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                                                <div style={{
-                                                    width: '48px', height: '48px',
-                                                    backgroundColor: 'rgba(255,255,255,0.05)',
-                                                    borderRadius: '10px',
-                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                    overflow: 'hidden'
-                                                }}>
-                                                    {site.icon ? (
-                                                        <img src={site.icon} style={{ width: '32px', height: '32px', objectFit: 'contain' }} alt="" />
-                                                    ) : (
-                                                        <Globe size={24} style={{ opacity: 0.2 }} />
-                                                    )}
+                                                <div style={{ width: '48px', height: '48px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                                                    {site.icon ? <img src={site.icon} style={{ width: '32px', height: '32px', objectFit: 'contain' }} alt="" /> : <Globe size={24} style={{ opacity: 0.2 }} />}
                                                 </div>
                                                 <div style={{ flex: 1, minWidth: 0 }}>
                                                     <div style={{ fontSize: '14px', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{site.name || 'Untitled'}</div>
                                                     <div style={{ fontSize: '11px', opacity: 0.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{site.url}</div>
                                                 </div>
                                             </div>
-
                                             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '4px' }}>
                                                 <span className="label-tiny" style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '4px' }}>{site.sessionType || 'shared'}</span>
                                                 <span className="label-tiny" style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '4px' }}>{site.group || 'General'}</span>
-                                                {site.requirePassword && (
-                                                    <span className="label-tiny" style={{ backgroundColor: 'rgba(234, 179, 8, 0.1)', color: '#eab308', padding: '2px 8px', borderRadius: '4px' }}>Locked</span>
-                                                )}
+                                                {site.requirePassword && <span className="label-tiny" style={{ backgroundColor: 'rgba(234, 179, 8, 0.1)', color: '#eab308', padding: '2px 8px', borderRadius: '4px' }}>Locked</span>}
                                             </div>
                                         </div>
                                     ))}
@@ -210,11 +212,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, config, 
                                     <h4 style={{ margin: '0 0 16px 0', fontSize: '14px' }}>System Settings</h4>
                                     <div className="input-group">
                                         <label className="label-tiny">Theme</label>
-                                        <select
-                                            value={localConfig.settings.theme}
-                                            onChange={(e) => updateSystemSetting('theme', e.target.value)}
-                                            className="settings-input"
-                                        >
+                                        <select value={localConfig.settings.theme} onChange={(e) => updateSystemSetting('theme', e.target.value)} className="settings-input">
                                             <option value="dark">Dark</option>
                                             <option value="light">Light</option>
                                             <option value="system">System</option>
@@ -222,26 +220,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, config, 
                                     </div>
                                     <div className="input-group">
                                         <label className="label-tiny">Default Layout</label>
-                                        <select
-                                            value={localConfig.settings.defaultLayout}
-                                            onChange={(e) => updateSystemSetting('defaultLayout', e.target.value)}
-                                            className="settings-input"
-                                        >
+                                        <select value={localConfig.settings.defaultLayout} onChange={(e) => updateSystemSetting('defaultLayout', e.target.value)} className="settings-input">
                                             <option value="single">Single View</option>
                                             <option value="split">Split View</option>
                                         </select>
-                                    </div>
-                                </div>
-
-                                <div style={{ paddingTop: '24px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                                    <h4 style={{ margin: '0 0 16px 0', fontSize: '14px' }}>Configuration</h4>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                                        <button className="btn-secondary" onClick={onImport}>
-                                            <Download size={16} /> Import JSON
-                                        </button>
-                                        <button className="btn-secondary" onClick={onExport}>
-                                            <Upload size={16} /> Export JSON
-                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -250,154 +232,134 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, config, 
                         {activeTab === 'shortcuts' && (
                             <ShortcutSection
                                 shortcuts={localConfig.shortcuts || []}
-                                onUpdate={(updatedShortcuts) => {
-                                    const newConfig = { ...localConfig, shortcuts: updatedShortcuts }
-                                    setLocalConfig(newConfig)
-                                    onSave(newConfig)
-                                }}
+                                onUpdate={(s) => { const newCfg = { ...localConfig, shortcuts: s }; setLocalConfig(newCfg); onSave(newCfg); }}
                             />
+                        )}
+
+                        {activeTab === 'security' && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                                <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+                                    <div style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                        <div style={{
+                                            width: '40px', height: '40px',
+                                            backgroundColor: localConfig.security.appLockEnabled ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255,100,100,0.05)',
+                                            borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            color: localConfig.security.appLockEnabled ? '#3b82f6' : '#ef4444'
+                                        }}>
+                                            {localConfig.security.appLockEnabled ? <Lock size={20} /> : <Shield size={20} />}
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ fontSize: '15px', fontWeight: 600 }}>App Lock</div>
+                                            <div style={{ fontSize: '12px', opacity: 0.5 }}>Requires a password when opening the application</div>
+                                        </div>
+                                        <div
+                                            onClick={() => localConfig.security.appLockEnabled ? updateSecuritySetting({ appLockEnabled: false }) : setShowPasswordSetup(true)}
+                                            style={{
+                                                width: '44px', height: '24px', backgroundColor: localConfig.security.appLockEnabled ? '#3b82f6' : 'rgba(255,255,255,0.1)',
+                                                borderRadius: '12px', padding: '2px', cursor: 'pointer', position: 'relative'
+                                            }}
+                                        >
+                                            <motion.div animate={{ x: localConfig.security.appLockEnabled ? 20 : 0 }} style={{ width: '20px', height: '20px', backgroundColor: 'white', borderRadius: '50%' }} />
+                                        </div>
+                                    </div>
+                                    {showPasswordSetup && (
+                                        <div style={{ padding: '0 20px 20px 20px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '20px' }}>
+                                            <div className="input-group">
+                                                <label className="label-tiny">Set Unlock Password</label>
+                                                <div style={{ display: 'flex', gap: '12px' }}>
+                                                    <input type="password" className="settings-input" placeholder="New password" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
+                                                    <button className="btn-primary" onClick={handleSetPassword} disabled={!newPassword}>Enable</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                                <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.06)', padding: '20px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                        <Clock size={20} style={{ color: 'rgba(255,255,255,0.4)' }} />
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ fontSize: '15px', fontWeight: 600 }}>Auto-lock Inactivity</div>
+                                            <div style={{ fontSize: '12px', opacity: 0.5 }}>Lock app after inactivity</div>
+                                        </div>
+                                        <select className="settings-input" style={{ width: '120px' }} value={localConfig.security.autoLockTimer} onChange={e => updateSecuritySetting({ autoLockTimer: parseInt(e.target.value) })}>
+                                            <option value={0}>Never</option>
+                                            <option value={1}>1 Min</option>
+                                            <option value={5}>5 Min</option>
+                                            <option value={15}>15 Min</option>
+                                            <option value={30}>30 Min</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
                         )}
                     </div>
 
                     <AnimatePresence>
                         {editingSite && (
-                            <motion.div
-                                initial={{ x: 320 }}
-                                animate={{ x: 0 }}
-                                exit={{ x: 320 }}
-                                className="settings-sidebar"
-                            >
+                            <motion.div initial={{ x: 320 }} animate={{ x: 0 }} exit={{ x: 320 }} className="settings-sidebar">
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                                     <h3 style={{ margin: 0, fontSize: '16px' }}>{editingSite.name ? 'Edit Entry' : 'Add Entry'}</h3>
                                     <button onClick={() => setEditingSite(null)} className="btn-icon"><X size={18} /></button>
                                 </div>
-
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                                        <div style={{
-                                            width: '80px', height: '80px',
-                                            backgroundColor: 'rgba(255,255,255,0.05)',
-                                            borderRadius: '16px',
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                            cursor: 'pointer', border: '1px solid rgba(255,255,255,0.1)',
-                                            position: 'relative'
-                                        }} onClick={handlePickIcon}>
-                                            {editingSite.icon ? (
-                                                <img src={editingSite.icon} style={{ width: '48px', height: '48px', objectFit: 'contain' }} alt="" />
-                                            ) : (
-                                                <Globe size={32} style={{ opacity: 0.1 }} />
-                                            )}
+                                        <div style={{ width: '80px', height: '80px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }} onClick={handlePickIcon}>
+                                            {editingSite.icon ? <img src={editingSite.icon} style={{ width: '48px', height: '48px', objectFit: 'contain' }} alt="" /> : <Globe size={32} style={{ opacity: 0.1 }} />}
                                         </div>
                                         <div style={{ display: 'flex', gap: '12px' }}>
                                             <button onClick={handlePickIcon} style={{ background: 'none', border: 'none', color: '#3b82f6', fontSize: '11px', cursor: 'pointer' }}>Change Icon</button>
-                                            <button onClick={handleResetIcon} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: '11px', cursor: 'pointer' }}>Reset to Default</button>
+                                            <button onClick={handleResetIcon} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: '11px', cursor: 'pointer' }}>Reset</button>
                                         </div>
                                     </div>
-
                                     <div className="input-group">
                                         <label className="label-tiny">Display Name</label>
-                                        <input
-                                            type="text"
-                                            className="settings-input"
-                                            value={editingSite.name}
-                                            onChange={e => {
-                                                const val = e.target.value;
-                                                setEditingSite(prev => prev ? { ...prev, name: val } : null);
-                                            }}
-                                            placeholder="e.g. My Admin"
-                                        />
+                                        <input type="text" className="settings-input" value={editingSite.name} onChange={e => setEditingSite({ ...editingSite, name: e.target.value })} />
                                     </div>
-
                                     <div className="input-group">
                                         <label className="label-tiny">URL</label>
-                                        <input
-                                            type="text"
-                                            className="settings-input"
-                                            value={editingSite.url}
-                                            onChange={e => {
-                                                const val = e.target.value;
-                                                setEditingSite(prev => prev ? { ...prev, url: val } : null);
-                                            }}
-                                            placeholder="https://..."
-                                        />
+                                        <input type="text" className="settings-input" value={editingSite.url} onChange={e => setEditingSite({ ...editingSite, url: e.target.value })} />
                                     </div>
-
                                     <div className="input-group">
-                                        <label className="label-tiny">Group Name</label>
-                                        <input
-                                            type="text"
-                                            className="settings-input"
-                                            value={editingSite.group || ''}
-                                            onChange={e => {
-                                                const val = e.target.value;
-                                                setEditingSite(prev => prev ? { ...prev, group: val } : null);
-                                            }}
-                                            placeholder="General, Work, etc."
-                                        />
+                                        <label className="label-tiny">Group</label>
+                                        <input type="text" className="settings-input" value={editingSite.group || ''} onChange={e => setEditingSite({ ...editingSite, group: e.target.value })} />
                                     </div>
-
-                                    <div className="input-group">
-                                        <label className="label-tiny">Session Type</label>
-                                        <div style={{ display: 'flex', backgroundColor: 'rgba(255,255,255,0.05)', padding: '3px', borderRadius: '8px', gap: '2px' }}>
-                                            <button
-                                                onClick={() => setEditingSite(prev => prev ? { ...prev, sessionType: 'shared' } : null)}
-                                                style={{
-                                                    flex: 1, padding: '6px', fontSize: '11px', border: 'none', borderRadius: '6px',
-                                                    backgroundColor: editingSite.sessionType === 'shared' ? 'rgba(255,255,255,0.1)' : 'transparent',
-                                                    color: editingSite.sessionType === 'shared' ? 'white' : 'rgba(255,255,255,0.4)',
-                                                    cursor: 'pointer'
-                                                }}
-                                            >Shared</button>
-                                            <button
-                                                onClick={() => setEditingSite(prev => prev ? { ...prev, sessionType: 'isolated' } : null)}
-                                                style={{
-                                                    flex: 1, padding: '6px', fontSize: '11px', border: 'none', borderRadius: '6px',
-                                                    backgroundColor: editingSite.sessionType === 'isolated' ? 'rgba(255,255,255,0.1)' : 'transparent',
-                                                    color: editingSite.sessionType === 'isolated' ? 'white' : 'rgba(255,255,255,0.4)',
-                                                    cursor: 'pointer'
-                                                }}
-                                            >Isolated</button>
-                                            <button
-                                                onClick={() => setEditingSite(prev => prev ? { ...prev, sessionType: 'grouped' } : null)}
-                                                style={{
-                                                    flex: 1, padding: '6px', fontSize: '11px', border: 'none', borderRadius: '6px',
-                                                    backgroundColor: editingSite.sessionType === 'grouped' ? 'rgba(255,255,255,0.1)' : 'transparent',
-                                                    color: editingSite.sessionType === 'grouped' ? 'white' : 'rgba(255,255,255,0.4)',
-                                                    cursor: 'pointer'
-                                                }}
-                                            >Grouped</button>
-                                        </div>
-                                    </div>
-
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '12px', marginTop: '8px' }}>
-                                        <input
-                                            type="checkbox"
-                                            checked={!!editingSite.requirePassword}
-                                            onChange={e => {
-                                                const val = e.target.checked;
-                                                setEditingSite(prev => prev ? { ...prev, requirePassword: val } : null);
-                                            }}
-                                            style={{ width: '16px', height: '16px' }}
-                                        />
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '12px' }}>
+                                        <input type="checkbox" checked={!!editingSite.requirePassword} onChange={e => setEditingSite({ ...editingSite, requirePassword: e.target.checked })} style={{ width: '16px', height: '16px' }} />
                                         <div style={{ flex: 1 }}>
                                             <div style={{ fontSize: '13px', fontWeight: 500 }}>Require Password</div>
-                                            <div style={{ fontSize: '10px', opacity: 0.4 }}>Ask for auth before opening</div>
+                                            <div style={{ fontSize: '10px', opacity: 0.4 }}>Ask auth before opening</div>
                                         </div>
-                                        <Shield size={16} style={{ color: editingSite.requirePassword ? '#eab308' : 'rgba(255,255,255,0.1)' }} />
                                     </div>
-
-                                    <button
-                                        className="primary-btn"
-                                        style={{ marginTop: '24px' }}
-                                        onClick={handleSaveSite}
-                                    >
-                                        Save Configuration
-                                    </button>
+                                    <button className="btn-primary" style={{ marginTop: '24px' }} onClick={handleSaveSite}>Save Changes</button>
                                 </div>
                             </motion.div>
                         )}
                     </AnimatePresence>
                 </div>
+
+                <AnimatePresence>
+                    {isExportModalOpen && (
+                        <SelectiveExportModal isOpen={isExportModalOpen} onClose={() => setIsExportModalOpen(false)} websites={localConfig.websites} onExport={handleExportSelected} />
+                    )}
+                    {importData && (
+                        <div className="settings-modal-overlay" style={{ zIndex: 10002 }} onClick={() => setImportData(null)}>
+                            <motion.div initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 10 }} className="settings-modal" style={{ width: '400px' }} onClick={e => e.stopPropagation()}>
+                                <div style={{ padding: '24px', textAlign: 'center' }}>
+                                    <div style={{ width: '48px', height: '48px', backgroundColor: 'rgba(59, 130, 246, 0.1)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6', margin: '0 auto 16px auto' }}>
+                                        <Upload size={24} />
+                                    </div>
+                                    <h3 style={{ margin: '0 0 8px 0' }}>Import Configuration</h3>
+                                    <p style={{ fontSize: '13px', opacity: 0.5, margin: '0 0 24px 0' }}>Found {importData.websites.length} websites. How to proceed?</p>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                        <button className="btn-primary" style={{ width: '100%' }} onClick={() => handleImportAction('merge')}>Merge</button>
+                                        <button className="btn-secondary" style={{ width: '100%', color: '#ef4444' }} onClick={() => handleImportAction('overwrite')}>Overwrite All</button>
+                                        <button style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', marginTop: '8px', cursor: 'pointer' }} onClick={() => setImportData(null)}>Cancel</button>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        </div>
+                    )}
+                </AnimatePresence>
             </motion.div>
         </div>
     )
