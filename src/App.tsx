@@ -4,6 +4,7 @@ import Launcher from './components/Launcher'
 import WebViewManager, { WebViewInfo } from './components/WebViewManager'
 import TitleBar from './components/TitleBar'
 import MissionControl from './components/MissionControl'
+import ConfigManagerModal from './components/ConfigManagerModal'
 import SettingsModal from './components/SettingsModal'
 import SettingsMenu from './components/SettingsMenu'
 import DownloadManager, { DownloadItem } from './components/DownloadManager'
@@ -46,6 +47,27 @@ function App() {
   const [layout, setLayout] = useState('single')
   const [splitRatio, setSplitRatio] = useState(0.5)
   const [isLocked, setIsLocked] = useState(false)
+  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false)
+
+  // Config Manager State
+  const [customGrid, setCustomGrid] = useState({ rows: 3, cols: 3 })
+  const [sequenceConfig, setSequenceConfig] = useState({
+    reloadInterval: 5000,
+    scrollInterval: 3000,
+    isReloading: false,
+    isScrolling: false
+  })
+  const [viewMode, setViewMode] = useState<'desktop' | 'mobile' | 'tablet'>('desktop')
+
+  // Initialize with the first app from config
+  const [activeWebViews, setActiveWebViews] = useState<WebViewInfo[]>([])
+  const [activeIds, setActiveIds] = useState<string[]>([])
+  const [currentUrl, setCurrentUrl] = useState('')
+  const [screenshots, setScreenshots] = useState<Record<string, string>>({})
+  const [isLoading, setIsLoading] = useState(false)
+  const [downloads, setDownloads] = useState<DownloadItem[]>([])
+  const [isDownloadManagerOpen, setIsDownloadManagerOpen] = useState(false)
+
   const lastActivityRef = useRef(Date.now())
 
   useEffect(() => {
@@ -97,14 +119,44 @@ function App() {
     }
   }, [config.security.appLockEnabled, config.security.autoLockTimer, isLocked, config.websites])
 
-  // Initialize with the first app from config
-  const [activeWebViews, setActiveWebViews] = useState<WebViewInfo[]>([])
-  const [activeIds, setActiveIds] = useState<string[]>([])
-  const [currentUrl, setCurrentUrl] = useState('')
-  const [screenshots, setScreenshots] = useState<Record<string, string>>({})
-  const [isLoading, setIsLoading] = useState(false)
-  const [downloads, setDownloads] = useState<DownloadItem[]>([])
-  const [isDownloadManagerOpen, setIsDownloadManagerOpen] = useState(false)
+  // Sequence Logic (Reload)
+  useEffect(() => {
+    if (!sequenceConfig.isReloading || activeIds.length === 0) return
+
+    let currentIndex = 0
+    const interval = setInterval(() => {
+      const id = activeIds[currentIndex]
+      // Use ref to reload specific webview if possible, otherwise trigger update
+      // Since we don't have direct access to webview refs here cleanly without a context/ref map,
+      // we'll dispatch a custom event that WebViewManager can listen to, or use IPC
+      // For simplicity in this architecture, we might need to expose a way to reload.
+      // Alternatively, update a state that triggers reload.
+
+      // Simpler approach: Send IPC message to main to then send back to specific webview, 
+      // OR mostly simply: dispatch a window event that WebViewManager listens to.
+      window.dispatchEvent(new CustomEvent('trigger-reload', { detail: { instanceId: id } }))
+
+      currentIndex = (currentIndex + 1) % activeIds.length
+    }, sequenceConfig.reloadInterval)
+
+    return () => clearInterval(interval)
+  }, [sequenceConfig.isReloading, sequenceConfig.reloadInterval, activeIds])
+
+  // Sequence Logic (Scroll)
+  useEffect(() => {
+    if (!sequenceConfig.isScrolling || activeIds.length === 0) return
+
+    let currentIndex = 0
+    const interval = setInterval(() => {
+      const id = activeIds[currentIndex]
+      // Trigger scroll
+      window.dispatchEvent(new CustomEvent('trigger-scroll', { detail: { instanceId: id } }))
+
+      currentIndex = (currentIndex + 1) % activeIds.length
+    }, sequenceConfig.scrollInterval)
+
+    return () => clearInterval(interval)
+  }, [sequenceConfig.isScrolling, sequenceConfig.scrollInterval, activeIds])
 
   // Load configuration on mount
   useEffect(() => {
@@ -523,25 +575,63 @@ function App() {
         onToggleMissionControl={() => setIsMissionControlOpen(!isMissionControlOpen)}
         onSetLayout={(l: string) => setLayout(l)}
         onOpenSettingsMenu={(rect) => setSettingsMenuRect(rect)}
-        onToggleDownloads={async () => {
-          if (!isDownloadManagerOpen) {
-            const history = await (window as any).electronAPI.getDownloadHistory()
-            if (history) setDownloads(history)
-          }
-          setIsDownloadManagerOpen(!isDownloadManagerOpen)
-        }}
+        onOpenConfig={() => setIsConfigModalOpen(true)}
+        onToggleDownloads={() => setIsDownloadManagerOpen(prev => !prev)}
         currentLayout={layout}
         currentUrl={currentUrl}
-        onNavigate={handleNavigate}
-        isCurrentTabLockable={!!config.websites.find(s => s.id === activeWebViews.find(w => w.instanceId === activeIds[0])?.appId)?.requirePassword}
-        isCurrentTabLocked={!!activeWebViews.find(w => w.instanceId === activeIds[0])?.isLocked}
+        onNavigate={(url) => {
+          if (activeIds.length > 0) {
+            const activeId = activeIds[0] // Or logic to determine specific tab
+            // Handle navigation... this prop might be generic for the TitleBar
+          }
+        }}
+        isCurrentTabLockable={!!config.websites.find(w => w.id === activeWebViews.find(wv => wv.instanceId === activeIds[0])?.appId)?.requirePassword}
+        isCurrentTabLocked={activeWebViews.find(wv => wv.instanceId === activeIds[0])?.isLocked}
         onToggleLockTab={() => {
           const activeId = activeIds[0]
           if (!activeId) return
           setActiveWebViews(prev => prev.map(wv =>
-            wv.instanceId === activeId ? { ...wv, isLocked: true } : wv
+            wv.instanceId === activeId ? { ...wv, isLocked: !wv.isLocked } : wv
           ))
+          // Also notify main process to update state if persistent is needed
         }}
+      />
+
+      <ConfigManagerModal
+        isOpen={isConfigModalOpen}
+        onClose={() => setIsConfigModalOpen(false)}
+        activeWebViews={activeWebViews}
+        onUpdateCustomGrid={(rows, cols) => {
+          setCustomGrid({ rows, cols })
+          setLayout('grid-custom')
+        }}
+        onBulkOpen={(urls, targetLayout) => {
+          // Create new webviews for URLs
+          const newWebViews: WebViewInfo[] = urls.map((url, index) => ({
+            instanceId: `bulk-${Date.now()}-${index}`,
+            appId: 'custom',
+            url: url.startsWith('http') ? url : `https://${url}`,
+            name: new URL(url.startsWith('http') ? url : `https://${url}`).hostname,
+            partition: 'persist:main'
+          }))
+
+          // Append or replace? Let's append if room, or clear?
+          // User request implies opening these. Let's add them.
+          setActiveWebViews(prev => [...prev, ...newWebViews])
+          setActiveIds(prev => {
+            const newIds = newWebViews.map(wv => wv.instanceId)
+            // Logic for max slots depends on layout, handled in render/effect, 
+            // but here we just set them as active.
+            // If targetLayout is grid, we might want to set ALL active if possible.
+            return [...prev, ...newIds].slice(-50) // Cap at 50 for safety
+          })
+          setLayout(targetLayout)
+        }}
+        onCloseTab={handleCloseWebView}
+        sequenceConfig={sequenceConfig}
+        onUpdateSequence={(newConfig) => setSequenceConfig(prev => ({ ...prev, ...newConfig }))}
+        viewMode={viewMode}
+        onSetViewMode={setViewMode}
       />
 
       <div className="main-content">

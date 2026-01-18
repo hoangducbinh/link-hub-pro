@@ -55,8 +55,7 @@ const Launcher: React.FC<LauncherProps> = ({ isOpen, onClose, onSelect, apps }) 
 
     return (
         <div className={`launcher-overlay ${isOpen ? 'open' : ''}`} style={{
-            backdropFilter: 'blur(40px)',
-            backgroundColor: 'rgba(0,0,0,0.4)', // Darker for better contrast
+            backgroundColor: 'transparent',
         }}>
             {/* Background overlay for clicks */}
             <div
@@ -70,10 +69,15 @@ const Launcher: React.FC<LauncherProps> = ({ isOpen, onClose, onSelect, apps }) 
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                        initial={{ opacity: 0, scale: 0.9, y: 10 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                        transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }} // Custom ease
+                        exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                        transition={{
+                            type: 'spring',
+                            stiffness: 260,
+                            damping: 26,
+                            mass: 1
+                        }}
                         className="launcher-content"
                         style={{
                             position: 'relative',
@@ -128,16 +132,17 @@ const Launcher: React.FC<LauncherProps> = ({ isOpen, onClose, onSelect, apps }) 
                                     style={{
                                         width: '100%',
                                         padding: '12px 12px 12px 42px', // Compact padding
-                                        borderRadius: '12px',
-                                        border: '1px solid rgba(255,255,255,0.15)',
-                                        backgroundColor: 'rgba(20, 20, 20, 0.6)',
+                                        borderRadius: 'var(--radius-premium)',
+                                        border: '1px solid var(--border-bright)',
+                                        backgroundColor: 'rgba(20, 20, 20, 0.8)',
                                         color: 'white',
-                                        fontSize: '16px',
+                                        fontSize: '15px',
                                         fontWeight: 400,
                                         outline: 'none',
-                                        boxShadow: '0 4px 24px rgba(0,0,0,0.2)',
-                                        backdropFilter: 'blur(20px)',
-                                        textAlign: 'left'
+                                        boxShadow: 'var(--shadow-premium)',
+                                        backdropFilter: 'blur(var(--blur-medium))',
+                                        textAlign: 'left',
+                                        transition: 'all 0.2s ease'
                                     }}
                                 />
                                 <Search
@@ -213,29 +218,31 @@ const Launcher: React.FC<LauncherProps> = ({ isOpen, onClose, onSelect, apps }) 
                                     }}
                                 >
                                     <div style={{
-                                        width: '60px',
-                                        height: '60px',
-                                        borderRadius: '14px', // Consistent squircle
-                                        backgroundColor: 'rgba(255,255,255,0.1)',
+                                        width: '64px',
+                                        height: '64px',
+                                        borderRadius: '16px',
+                                        backgroundColor: activeIndex === index ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.06)',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        marginBottom: '6px',
-                                        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+                                        marginBottom: '10px',
+                                        boxShadow: activeIndex === index ? '0 8px 32px rgba(0,0,0,0.4)' : '0 2px 12px rgba(0,0,0,0.1)',
                                         overflow: 'hidden',
-                                        border: '1px solid rgba(255,255,255,0.08)',
+                                        border: activeIndex === index ? '1px solid rgba(255,255,255,0.3)' : '1px solid rgba(255,255,255,0.08)',
                                         backdropFilter: 'blur(12px)',
-                                        position: 'relative' // For visual containment
+                                        position: 'relative',
+                                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
                                     }}>
                                         {app.icon ? (
                                             <img
                                                 src={app.icon}
                                                 style={{
-                                                    width: '36px',
-                                                    height: '36px',
+                                                    width: '40px',
+                                                    height: '40px',
                                                     objectFit: 'contain',
-                                                    // Ensure icon doesn't look like it has its own weird border
-                                                    borderRadius: '0'
+                                                    borderRadius: '0',
+                                                    filter: activeIndex === index ? 'none' : 'grayscale(0.2) opacity(0.8)',
+                                                    transition: 'all 0.2s ease'
                                                 }}
                                                 alt={app.name}
                                                 onError={(e) => {
@@ -244,7 +251,7 @@ const Launcher: React.FC<LauncherProps> = ({ isOpen, onClose, onSelect, apps }) 
                                                 }}
                                             />
                                         ) : (
-                                            <Globe size={32} color="rgba(255,255,255,0.8)" />
+                                            <Globe size={36} color={activeIndex === index ? "white" : "rgba(255,255,255,0.6)"} />
                                         )}
                                     </div>
                                     <span style={{

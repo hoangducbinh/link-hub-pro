@@ -2,6 +2,13 @@ import { ipcRenderer, contextBridge } from 'electron'
 
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld('electronAPI', {
+  // Context Menu & DevTools
+  showContextMenu: (params: { x: number, y: number, instanceId: string }) => ipcRenderer.send('show-context-menu', params),
+  onOpenDevTools: (callback: (event: any, data: { instanceId: string }) => void) => {
+    const listener = (event: any, data: any) => callback(event, data)
+    ipcRenderer.on('open-devtools', listener)
+    return () => ipcRenderer.removeListener('open-devtools', listener)
+  },
   onToggleLauncher: (callback: () => void) => {
     const listener = () => callback()
     ipcRenderer.on('toggle-launcher', listener)

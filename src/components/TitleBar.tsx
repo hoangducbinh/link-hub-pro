@@ -12,7 +12,8 @@ import {
     Settings,
     Download,
     Lock,
-    Unlock
+    Unlock,
+    Sliders
 } from 'lucide-react'
 import LayoutMenu from './LayoutMenu'
 
@@ -24,6 +25,7 @@ interface TitleBarProps {
     onToggleMissionControl: () => void
     onSetLayout: (layout: string) => void
     onOpenSettingsMenu: (rect: DOMRect) => void
+    onOpenConfig: () => void
     onToggleDownloads: () => void
     currentLayout: string
     currentUrl: string
@@ -40,6 +42,7 @@ const TitleBar: React.FC<TitleBarProps> = ({
     onToggleLauncher,
     onToggleMissionControl,
     onSetLayout,
+    onOpenConfig,
     onOpenSettingsMenu,
     onToggleDownloads,
     currentLayout,
@@ -141,15 +144,15 @@ const TitleBar: React.FC<TitleBarProps> = ({
                         style={{
                             width: '100%',
                             height: '28px',
-                            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                            backgroundColor: 'rgba(255, 255, 255, 0.04)',
                             border: '1px solid var(--border-color)',
-                            borderRadius: '6px',
+                            borderRadius: '8px',
                             padding: '0 12px',
                             color: 'var(--text-primary)',
                             fontSize: '12px',
                             outline: 'none',
                             textAlign: 'center',
-                            transition: 'all 0.2s ease',
+                            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                         }}
                         className="address-bar-input"
                     />
@@ -182,6 +185,14 @@ const TitleBar: React.FC<TitleBarProps> = ({
                 </button>
 
                 <div style={{ width: '1px', height: '18px', backgroundColor: 'var(--border-color)', margin: 'auto 4px' }} />
+
+                <button
+                    className="tool-btn"
+                    onClick={onOpenConfig}
+                    title="Configuration"
+                >
+                    <Sliders size={18} strokeWidth={1.5} />
+                </button>
 
                 <button
                     className="tool-btn"

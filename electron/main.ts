@@ -1,4 +1,4 @@
-import { app, BrowserWindow, globalShortcut, ipcMain, dialog } from 'electron'
+import { app, BrowserWindow, globalShortcut, ipcMain, dialog, Menu } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import fs from 'node:fs'
@@ -73,6 +73,35 @@ function createWindow() {
 ipcMain.on('window-minimize', () => {
   const win = BrowserWindow.getFocusedWindow() || mainWindow
   win?.minimize()
+})
+
+// Context Menu IPC
+ipcMain.on('show-context-menu', (event, params) => {
+  const { x, y, instanceId } = params
+  const template = [
+    { role: 'cut' },
+    { role: 'copy' },
+    { role: 'paste' },
+    { type: 'separator' },
+    {
+      label: 'Inspect Element',
+      click: () => {
+        event.reply('open-devtools', { instanceId })
+      }
+    }
+  ]
+  const menu = Menu.buildFromTemplate(template as any)
+  const win = BrowserWindow.fromWebContents(event.sender) || mainWindow
+  menu.popup({ window: win!, x, y })
+})
+
+ipcMain.on('show-download-menu', (event, item) => {
+  const win = BrowserWindow.fromWebContents(event.sender) || mainWindow
+  if (win?.isMaximized()) {
+    win.unmaximize()
+  } else {
+    win?.maximize()
+  }
 })
 
 ipcMain.on('window-maximize', (event) => {
@@ -247,7 +276,7 @@ function setupDownloadHandler(session: any) {
 
   session.on('will-download', (_event: any, item: any, _webContents: any) => {
     // Generate a unique ID
-    const id = `dl-${Date.now()}-${++downloadCounter}`
+    const id = `dl - ${Date.now()} -${++downloadCounter} `
 
     // Set default save path to Downloads folder
     const downloadsPath = app.getPath('downloads')
@@ -260,7 +289,7 @@ function setupDownloadHandler(session: any) {
     while (fs.existsSync(finalPath)) {
       const ext = path.extname(fileName)
       const base = path.basename(fileName, ext)
-      finalPath = path.join(downloadsPath, `${base} (${counter})${ext}`)
+      finalPath = path.join(downloadsPath, `${base} (${counter})${ext} `)
       counter++
     }
 

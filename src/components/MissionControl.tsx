@@ -111,14 +111,14 @@ const MissionControl: React.FC<MissionControlProps> = ({
                                             }}
                                             style={{
                                                 backgroundColor: 'rgba(30, 30, 30, 0.4)',
-                                                borderRadius: '12px',
+                                                borderRadius: 'var(--radius-premium)',
                                                 cursor: 'pointer',
-                                                border: '1px solid rgba(255, 255, 255, 0.1)',
+                                                border: '1px solid var(--border-color)',
                                                 position: 'relative',
                                                 display: 'flex',
                                                 flexDirection: 'column',
-                                                backdropFilter: 'blur(30px)',
-                                                boxShadow: '0 4px 24px rgba(0,0,0,0.1)',
+                                                backdropFilter: 'blur(var(--blur-medium))',
+                                                boxShadow: 'var(--shadow-premium)',
                                                 overflow: 'hidden',
                                                 width: '100%',
                                                 aspectRatio: '16/10',
@@ -206,19 +206,21 @@ const MissionControl: React.FC<MissionControlProps> = ({
 
                         <button
                             onClick={onClose}
+                            className="tool-btn"
                             style={{
                                 position: 'fixed',
                                 top: '40px',
                                 right: '40px',
-                                background: 'none',
-                                border: 'none',
-                                color: 'white',
-                                cursor: 'pointer',
-                                opacity: 0.5,
-                                pointerEvents: 'auto'
+                                width: '44px',
+                                height: '44px',
+                                borderRadius: '50%',
+                                backgroundColor: 'rgba(255,255,255,0.05)',
+                                border: '1px solid var(--border-color)',
+                                pointerEvents: 'auto',
+                                opacity: 1
                             }}
                         >
-                            <X size={32} />
+                            <X size={24} />
                         </button>
                     </motion.div>
                 )}
