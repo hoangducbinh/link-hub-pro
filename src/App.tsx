@@ -44,6 +44,7 @@ function App() {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
   const [settingsMenuRect, setSettingsMenuRect] = useState<DOMRect | null>(null)
   const [layout, setLayout] = useState('single')
+  const [splitRatio, setSplitRatio] = useState(0.5)
   const [isLocked, setIsLocked] = useState(false)
   const lastActivityRef = useRef(Date.now())
 
@@ -522,6 +523,8 @@ function App() {
               wv.instanceId === instanceId ? { ...wv, isLocked: false } : wv
             ))
           }}
+          splitRatio={splitRatio}
+          onResizeSplit={setSplitRatio}
         />
 
         <Launcher

@@ -6,8 +6,6 @@ import {
     ChevronRight,
     RotateCcw,
     LayoutGrid,
-    Columns,
-    Rows,
     Maximize2,
     Square,
     Layout,
@@ -16,6 +14,7 @@ import {
     Lock,
     Unlock
 } from 'lucide-react'
+import LayoutMenu from './LayoutMenu'
 
 interface TitleBarProps {
     onBack: () => void
@@ -56,6 +55,15 @@ const TitleBar: React.FC<TitleBarProps> = ({
     React.useEffect(() => {
         setInputValue(currentUrl)
     }, [currentUrl])
+
+    const [openLayoutMenu, setOpenLayoutMenu] = React.useState(false)
+    const [layoutMenuRect, setLayoutMenuRect] = React.useState<DOMRect | null>(null)
+
+    const handleOpenLayoutMenu = (e: React.MouseEvent<HTMLButtonElement>) => {
+        const rect = e.currentTarget.getBoundingClientRect()
+        setLayoutMenuRect(rect)
+        setOpenLayoutMenu(!openLayoutMenu)
+    }
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
@@ -158,25 +166,11 @@ const TitleBar: React.FC<TitleBarProps> = ({
 
             <div className="layout-group no-drag" style={{ display: 'flex', gap: '4px', borderLeft: '1px solid var(--border-color)', paddingLeft: '8px', paddingRight: '8px' }}>
                 <button
-                    className={`tool-btn ${currentLayout === 'single' ? 'active' : ''}`}
-                    onClick={() => onSetLayout('single')}
-                    title="Single View"
+                    className={`tool-btn ${openLayoutMenu ? 'active' : ''}`}
+                    onClick={handleOpenLayoutMenu}
+                    title="Change Layout"
                 >
-                    <Layout size={18} />
-                </button>
-                <button
-                    className={`tool-btn ${currentLayout === 'split-h' ? 'active' : ''}`}
-                    onClick={() => onSetLayout('split-h')}
-                    title="Split Horizontal"
-                >
-                    <Columns size={15} strokeWidth={1.5} />
-                </button>
-                <button
-                    className={`tool-btn ${currentLayout === 'split-v' ? 'active' : ''}`}
-                    onClick={() => onSetLayout('split-v')}
-                    title="Split Vertical"
-                >
-                    <Rows size={15} strokeWidth={1.5} />
+                    <Layout size={18} strokeWidth={1.5} />
                 </button>
 
                 <button
@@ -198,20 +192,30 @@ const TitleBar: React.FC<TitleBarProps> = ({
                 </button>
             </div>
 
-            {!isMac && (
-                <div className="window-controls no-drag">
-                    <button className="control-btn" onClick={() => (window as any).electronAPI.minimize()}>
-                        <Minus size={14} strokeWidth={1.5} />
-                    </button>
-                    <button className="control-btn" onClick={() => (window as any).electronAPI.maximize()}>
-                        <Maximize2 size={14} strokeWidth={1.5} />
-                    </button>
-                    <button className="control-btn close" onClick={() => (window as any).electronAPI.close()}>
-                        <X size={14} strokeWidth={1.5} />
-                    </button>
-                </div>
-            )}
-        </div>
+            <LayoutMenu
+                isOpen={openLayoutMenu}
+                onClose={() => setOpenLayoutMenu(false)}
+                anchorRect={layoutMenuRect}
+                currentLayout={currentLayout}
+                onSetLayout={onSetLayout}
+            />
+
+            {
+                !isMac && (
+                    <div className="window-controls no-drag">
+                        <button className="control-btn" onClick={() => (window as any).electronAPI.minimize()}>
+                            <Minus size={14} strokeWidth={1.5} />
+                        </button>
+                        <button className="control-btn" onClick={() => (window as any).electronAPI.maximize()}>
+                            <Maximize2 size={14} strokeWidth={1.5} />
+                        </button>
+                        <button className="control-btn close" onClick={() => (window as any).electronAPI.close()}>
+                            <X size={14} strokeWidth={1.5} />
+                        </button>
+                    </div>
+                )
+            }
+        </div >
     )
 }
 
