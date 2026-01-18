@@ -271,19 +271,53 @@ function App() {
 
     const instanceId = instanceToFocus.instanceId
     setActiveIds((prev) => {
-      if (layout === 'single') return [instanceId]
+      // Determine max slots based on layout
+      let maxSlots = 1
+      if (layout === 'single') maxSlots = 1
+      else if (layout === 'split-h' || layout === 'split-v') maxSlots = 2
+      else if (layout === 'grid-2x2') maxSlots = 4
+      else if (layout === 'grid-3x3') maxSlots = 9
+      else if (layout === 'grid-4x4') maxSlots = 16
+      else if (layout === 'grid-mobile-3x4') maxSlots = 12
+      else if (layout === 'grid-mobile-8x3') maxSlots = 24
+      else if (layout === 'grid-mobile-8x4') maxSlots = 32
+      else if (layout === 'grid-mobile-4x6') maxSlots = 24
+
+      // If already in the list, keep it
       if (prev.includes(instanceId)) return prev
-      if (prev.length < 2) return [...prev, instanceId]
-      return [instanceId, prev[0]]
+
+      // Add to the list, respecting max slots
+      if (prev.length < maxSlots) {
+        return [...prev, instanceId]
+      } else {
+        // Replace the oldest (first) item
+        return [...prev.slice(1), instanceId]
+      }
     })
   }
 
   const handleSelectFromMissionControl = (instanceId: string) => {
     setIsMissionControlOpen(false)
     setActiveIds((prev) => {
-      if (layout === 'single') return [instanceId]
+      // Determine max slots based on layout
+      let maxSlots = 1
+      if (layout === 'single') maxSlots = 1
+      else if (layout === 'split-h' || layout === 'split-v') maxSlots = 2
+      else if (layout === 'grid-2x2') maxSlots = 4
+      else if (layout === 'grid-3x3') maxSlots = 9
+      else if (layout === 'grid-4x4') maxSlots = 16
+      else if (layout === 'grid-mobile-3x4') maxSlots = 12
+      else if (layout === 'grid-mobile-8x3') maxSlots = 24
+      else if (layout === 'grid-mobile-8x4') maxSlots = 32
+      else if (layout === 'grid-mobile-4x6') maxSlots = 24
+
       if (prev.includes(instanceId)) return prev
-      return [instanceId, ...prev.slice(0, 1)]
+
+      if (prev.length < maxSlots) {
+        return [...prev, instanceId]
+      } else {
+        return [...prev.slice(1), instanceId]
+      }
     })
   }
 

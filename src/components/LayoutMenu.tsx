@@ -112,12 +112,83 @@ const LayoutMenu: React.FC<LayoutMenuProps> = ({ isOpen, onClose, anchorRect, cu
                     <span>Split Vertical</span>
                 </button>
 
+                <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', margin: '4px 0' }} />
+
                 <button
-                    style={{ ...itemStyle, opacity: 0.5, cursor: 'not-allowed' }}
-                    title="Coming soon"
+                    className={currentLayout === 'grid-2x2' ? 'active-layout' : ''}
+                    onClick={() => { onSetLayout('grid-2x2'); onClose(); }}
+                    style={getButtonStyle('grid-2x2')}
+                    onMouseEnter={hoverStyle}
+                    onMouseLeave={leaveStyle}
                 >
                     <LayoutGrid size={16} />
-                    <span>Grid (Soon)</span>
+                    <span>Grid 2×2</span>
+                </button>
+
+                <button
+                    className={currentLayout === 'grid-3x3' ? 'active-layout' : ''}
+                    onClick={() => { onSetLayout('grid-3x3'); onClose(); }}
+                    style={getButtonStyle('grid-3x3')}
+                    onMouseEnter={hoverStyle}
+                    onMouseLeave={leaveStyle}
+                >
+                    <LayoutGrid size={16} />
+                    <span>Grid 3×3</span>
+                </button>
+
+                <button
+                    className={currentLayout === 'grid-4x4' ? 'active-layout' : ''}
+                    onClick={() => { onSetLayout('grid-4x4'); onClose(); }}
+                    style={getButtonStyle('grid-4x4')}
+                    onMouseEnter={hoverStyle}
+                    onMouseLeave={leaveStyle}
+                >
+                    <LayoutGrid size={16} />
+                    <span>Grid 4×4</span>
+                </button>
+
+                <button
+                    className={currentLayout === 'grid-mobile-3x4' ? 'active-layout' : ''}
+                    onClick={() => { onSetLayout('grid-mobile-3x4'); onClose(); }}
+                    style={getButtonStyle('grid-mobile-3x4')}
+                    onMouseEnter={hoverStyle}
+                    onMouseLeave={leaveStyle}
+                >
+                    <LayoutGrid size={16} />
+                    <span>Mobile 3×4</span>
+                </button>
+
+                <button
+                    className={currentLayout === 'grid-mobile-8x3' ? 'active-layout' : ''}
+                    onClick={() => { onSetLayout('grid-mobile-8x3'); onClose(); }}
+                    style={getButtonStyle('grid-mobile-8x3')}
+                    onMouseEnter={hoverStyle}
+                    onMouseLeave={leaveStyle}
+                >
+                    <LayoutGrid size={16} />
+                    <span>Mobile 8×3</span>
+                </button>
+
+                <button
+                    className={currentLayout === 'grid-mobile-8x4' ? 'active-layout' : ''}
+                    onClick={() => { onSetLayout('grid-mobile-8x4'); onClose(); }}
+                    style={getButtonStyle('grid-mobile-8x4')}
+                    onMouseEnter={hoverStyle}
+                    onMouseLeave={leaveStyle}
+                >
+                    <LayoutGrid size={16} />
+                    <span>Mobile 8×4</span>
+                </button>
+
+                <button
+                    className={currentLayout === 'grid-mobile-4x6' ? 'active-layout' : ''}
+                    onClick={() => { onSetLayout('grid-mobile-4x6'); onClose(); }}
+                    style={getButtonStyle('grid-mobile-4x6')}
+                    onMouseEnter={hoverStyle}
+                    onMouseLeave={leaveStyle}
+                >
+                    <LayoutGrid size={16} />
+                    <span>Mobile 4×6</span>
                 </button>
 
             </motion.div>

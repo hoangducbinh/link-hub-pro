@@ -152,6 +152,153 @@ const WebViewManager: React.FC<WebViewManagerProps> = ({
                 style.top = `${splitRatio * 100}%`
                 style.height = `${(1 - splitRatio) * 100}%`
             }
+        } else if (layout === 'grid-2x2') {
+            // 2x2 grid (4 cells)
+            const cols = 2, rows = 2
+            const col = slotIndex % cols
+            const row = Math.floor(slotIndex / cols)
+            const cellWidth = 100 / cols
+            const cellHeight = 100 / rows
+
+            style.left = `${col * cellWidth}%`
+            style.top = `${row * cellHeight}%`
+            style.width = `${cellWidth}%`
+            style.height = `${cellHeight}%`
+
+            if (col < cols - 1) style.borderRight = '1px solid var(--border-color)'
+            if (row < rows - 1) style.borderBottom = '1px solid var(--border-color)'
+        } else if (layout === 'grid-3x3') {
+            // 3x3 grid (9 cells)
+            const cols = 3, rows = 3
+            const col = slotIndex % cols
+            const row = Math.floor(slotIndex / cols)
+            const cellWidth = 100 / cols
+            const cellHeight = 100 / rows
+
+            style.left = `${col * cellWidth}%`
+            style.top = `${row * cellHeight}%`
+            style.width = `${cellWidth}%`
+            style.height = `${cellHeight}%`
+
+            if (col < cols - 1) style.borderRight = '1px solid var(--border-color)'
+            if (row < rows - 1) style.borderBottom = '1px solid var(--border-color)'
+        } else if (layout === 'grid-4x4') {
+            // 4x4 grid (16 cells)
+            const cols = 4, rows = 4
+            const col = slotIndex % cols
+            const row = Math.floor(slotIndex / cols)
+            const cellWidth = 100 / cols
+            const cellHeight = 100 / rows
+
+            style.left = `${col * cellWidth}%`
+            style.top = `${row * cellHeight}%`
+            style.width = `${cellWidth}%`
+            style.height = `${cellHeight}%`
+
+
+            if (col < cols - 1) style.borderRight = '1px solid var(--border-color)'
+            if (row < rows - 1) style.borderBottom = '1px solid var(--border-color)'
+        } else if (layout === 'grid-mobile-3x4') {
+            // Mobile 3x4 grid (12 cells) - 3 columns, 4 rows
+            // Each cell should be portrait (9:16 aspect ratio like mobile)
+            const cols = 3, rows = 4
+            const col = slotIndex % cols
+            const row = Math.floor(slotIndex / cols)
+
+            // Calculate cell dimensions to maintain portrait aspect ratio
+            // Use 9:16 ratio (mobile portrait)
+            const cellWidthPercent = 100 / cols  // ~33.33%
+            const aspectRatio = 9 / 16  // width / height
+            let cellHeightPercent = (cellWidthPercent / aspectRatio) * (window.innerWidth / window.innerHeight) * 100
+
+            // Scale down if total height exceeds 100%
+            const totalHeight = cellHeightPercent * rows
+            if (totalHeight > 100) {
+                cellHeightPercent *= (100 / totalHeight)
+            }
+
+            style.left = `${col * cellWidthPercent}%`
+            style.top = `${row * cellHeightPercent}%`
+            style.width = `${cellWidthPercent}%`
+            style.height = `${cellHeightPercent}%`
+
+            if (col < cols - 1) style.borderRight = '1px solid var(--border-color)'
+            if (row < rows - 1) style.borderBottom = '1px solid var(--border-color)'
+        } else if (layout === 'grid-mobile-8x3') {
+            // Mobile 8x3 grid (24 cells) - 8 columns, 3 rows
+            // Each cell should be portrait (9:16 aspect ratio like mobile)
+            const cols = 8, rows = 3
+            const col = slotIndex % cols
+            const row = Math.floor(slotIndex / cols)
+
+            // Calculate cell dimensions to maintain portrait aspect ratio
+            const cellWidthPercent = 100 / cols  // 12.5%
+            const aspectRatio = 9 / 16  // width / height
+            let cellHeightPercent = (cellWidthPercent / aspectRatio) * (window.innerWidth / window.innerHeight) * 100
+
+            // Scale down if total height exceeds 100%
+            const totalHeight = cellHeightPercent * rows
+            if (totalHeight > 100) {
+                cellHeightPercent *= (100 / totalHeight)
+            }
+
+            style.left = `${col * cellWidthPercent}%`
+            style.top = `${row * cellHeightPercent}%`
+            style.width = `${cellWidthPercent}%`
+            style.height = `${cellHeightPercent}%`
+
+            if (col < cols - 1) style.borderRight = '1px solid var(--border-color)'
+            if (row < rows - 1) style.borderBottom = '1px solid var(--border-color)'
+        } else if (layout === 'grid-mobile-8x4') {
+            // Mobile 8x4 grid (32 cells) - 8 columns, 4 rows
+            // Each cell should be portrait (9:16 aspect ratio like mobile)
+            const cols = 8, rows = 4
+            const col = slotIndex % cols
+            const row = Math.floor(slotIndex / cols)
+
+            // Calculate cell dimensions to maintain portrait aspect ratio
+            const cellWidthPercent = 100 / cols  // 25%
+            const aspectRatio = 9 / 16  // width / height
+            let cellHeightPercent = (cellWidthPercent / aspectRatio) * (window.innerWidth / window.innerHeight) * 100
+
+            // Scale down if total height exceeds 100%
+            const totalHeight = cellHeightPercent * rows
+            if (totalHeight > 100) {
+                cellHeightPercent *= (100 / totalHeight)
+            }
+
+            style.left = `${col * cellWidthPercent}%`
+            style.top = `${row * cellHeightPercent}%`
+            style.width = `${cellWidthPercent}%`
+            style.height = `${cellHeightPercent}%`
+
+            if (col < cols - 1) style.borderRight = '1px solid var(--border-color)'
+            if (row < rows - 1) style.borderBottom = '1px solid var(--border-color)'
+        } else if (layout === 'grid-mobile-4x6') {
+            // Mobile 4x6 grid (24 cells) - 4 columns, 6 rows
+            // Each cell should be portrait (9:16 aspect ratio like mobile)
+            const cols = 4, rows = 6
+            const col = slotIndex % cols
+            const row = Math.floor(slotIndex / cols)
+
+            // Calculate cell dimensions to maintain portrait aspect ratio
+            const cellWidthPercent = 100 / cols  // 25%
+            const aspectRatio = 9 / 16  // width / height
+            let cellHeightPercent = (cellWidthPercent / aspectRatio) * (window.innerWidth / window.innerHeight) * 100
+
+            // Scale down if total height exceeds 100%
+            const totalHeight = cellHeightPercent * rows
+            if (totalHeight > 100) {
+                cellHeightPercent *= (100 / totalHeight)
+            }
+
+            style.left = `${col * cellWidthPercent}%`
+            style.top = `${row * cellHeightPercent}%`
+            style.width = `${cellWidthPercent}%`
+            style.height = `${cellHeightPercent}%`
+
+            if (col < cols - 1) style.borderRight = '1px solid var(--border-color)'
+            if (row < rows - 1) style.borderBottom = '1px solid var(--border-color)'
         }
 
         return style
