@@ -1,7 +1,9 @@
 {
   "name": "linkhub-electron",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "description": "A powerful multi-view web browser and dashboard built with Electron.",
+  "author": "hoangducbinh",
   "type": "module",
   "scripts": {
     "dev": "vite",

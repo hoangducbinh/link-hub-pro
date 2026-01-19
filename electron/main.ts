@@ -3,6 +3,12 @@ import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import fs from 'node:fs'
 import crypto from 'node:crypto'
+import { autoUpdater } from 'electron-updater'
+import log from 'electron-log'
+
+// Configure logging
+log.transports.file.level = 'info';
+autoUpdater.logger = log;
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -443,20 +449,12 @@ app.whenReady().then(() => {
   createWindow()
 
   // Check for updates after window is ready
-  // In production, this checks the release server. In dev, via dev-app-update.yml if configured.
   if (!process.env.VITE_DEV_SERVER_URL) {
     autoUpdater.checkForUpdatesAndNotify()
   }
 })
 
-// --- Auto Updater Logic ---
-import { autoUpdater } from 'electron-updater'
-import log from 'electron-log'
-
-log.transports.file.level = 'info';
-autoUpdater.logger = log;
-
-// Events
+// --- Auto Updater Events ---
 autoUpdater.on('checking-for-update', () => {
   mainWindow?.webContents.send('update:status', { status: 'checking' })
 })
